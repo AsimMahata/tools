@@ -1,0 +1,16 @@
+# Parent index repository .gitignore
+# Tracks tom/, root index files, and sibling README.md files
+# Ignores sibling source code, build artifacts, and internal .git directories
+
+/*
+!/tom/
+!/.gitignore
+!/README.md
+!/config.toml
+!/registry.toml
+
+# Allow README files in sibling tool directories
+!/*/
+/*/
+!/*/README.md
+!/*/readme.md
