@@ -127,6 +127,12 @@ fn install_single(tool_name: &str, auto_yes: bool, registry: &Registry, tools_di
         }
         Err(err) => {
             eprintln!("\n{} Installation notice: {}", "⚠".yellow().bold(), err);
+            if !tool_name.eq_ignore_ascii_case("tom") && !tool_name.eq_ignore_ascii_case("sudow") {
+                eprintln!(
+                    "  {} If installation failed due to permissions, run with 'sudow' (run 'tom install sudow' to get sudow).",
+                    "💡".yellow()
+                );
+            }
         }
     }
 }
