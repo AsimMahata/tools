@@ -5,78 +5,57 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-/// Clone repository using `git clone` into target directory
+/// Clone repository using native `git clone` in the parent directory
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
     let parent_dir = target_path.parent().unwrap_or_else(|| Path::new("."));
     let tool_name = target_path
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("tool");
-    let temp_clone_path = parent_dir.join(format!(".tom_clone_{}", tool_name));
 
-    // Clean up any stale temp clone directory
-    let _ = remove_dir_all_force(&temp_clone_path);
+    let readme_path = target_path.join("README.md");
+    let readme_content = fs::read_to_string(&readme_path).ok();
 
-    // 1. Run git clone
+    // 1. If target directory exists as an uninstalled stub (no source code/.git), clear it for git clone
+    if target_path.exists() {
+        let has_code = target_path.join("Cargo.toml").exists()
+            || target_path.join("pyproject.toml").exists()
+            || target_path.join("package.json").exists()
+            || target_path.join("src").exists();
+
+        let has_git = target_path.join(".git").exists();
+
+        if !has_code && !has_git {
+            let _ = remove_tool_contents_except_readme(target_path);
+            clear_readonly(&readme_path);
+            let _ = fs::remove_file(&readme_path);
+            clear_readonly(target_path);
+            let _ = fs::remove_dir(target_path);
+        } else {
+            return Err(format!(
+                "Directory already contains code or a Git repository: {}",
+                target_path.display()
+            ));
+        }
+    }
+
+    // 2. Execute native git clone directly in parent directory with relative folder name
     let output = Command::new("git")
-        .args(["clone", repo_url, temp_clone_path.to_str().unwrap_or(".")])
+        .args(["clone", repo_url, tool_name])
+        .current_dir(parent_dir)
         .output()
         .map_err(|e| format!("Failed to execute git clone: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let _ = remove_dir_all_force(&temp_clone_path);
+        // Restore stub README if clone failed
+        if let Some(content) = readme_content {
+            let _ = fs::create_dir_all(target_path);
+            let _ = fs::write(&readme_path, content);
+        }
         return Err(format!("git clone failed:\n{}", stderr.trim()));
     }
 
-    // 2. Ensure target directory exists
-    let _ = fs::create_dir_all(target_path);
-    clear_readonly(target_path);
-
-    // 3. Move all cloned contents into target directory
-    let entries = fs::read_dir(&temp_clone_path)
-        .map_err(|e| format!("Failed to read cloned files: {}", e))?;
-
-    for entry in entries.flatten() {
-        let src = entry.path();
-        let name = entry.file_name();
-        let dest = target_path.join(&name);
-
-        if dest.exists() {
-            clear_readonly(&dest);
-            if dest.is_dir() {
-                let _ = remove_dir_all_force(&dest);
-            } else {
-                let _ = fs::remove_file(&dest);
-            }
-        }
-
-        if let Err(_) = fs::rename(&src, &dest) {
-            if src.is_dir() {
-                let _ = copy_dir_all(&src, &dest);
-            } else {
-                let _ = fs::copy(&src, &dest);
-            }
-        }
-    }
-
-    // 4. Remove temp clone directory
-    let _ = remove_dir_all_force(&temp_clone_path);
-
-    Ok(())
-}
-
-fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
-    fs::create_dir_all(dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_dir_all(&entry.path(), &dst.join(entry.file_name()))?;
-        } else {
-            fs::copy(entry.path(), dst.join(entry.file_name()))?;
-        }
-    }
     Ok(())
 }
 
@@ -176,7 +155,6 @@ pub fn remove_tool_contents_except_readme(tool_path: &Path) -> std::io::Result<(
 
     let mut last_err = None;
 
-    // Retry loop to handle brief Windows file locks from editors/language servers
     for i in 0..5 {
         if i > 0 {
             sleep(Duration::from_millis(250 * i));
