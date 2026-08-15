@@ -43,7 +43,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
 
     println!("Uninstalling {}...", tool.name.cyan().bold());
     if !tool.name.eq_ignore_ascii_case("tom") && !tool.name.eq_ignore_ascii_case("sudow") {
-        println!("  {} Tip: If uninstallation fails due to permissions, run with 'sudow' (install via 'tom install sudow').", "💡".yellow());
+        println!("  {} If uninstallation fails due to permissions, run with '{}' (install via '{}')", "🛡️ Note:".red().bold(), "sudow".red().bold(), "tom install sudow".red());
     }
 
     let mut ran_script = false;

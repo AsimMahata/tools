@@ -22,6 +22,15 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         if let Some(d) = desc {
             println!("{:<20} {}", "Description:".bold(), d);
         }
+
+        if !tool.name.eq_ignore_ascii_case("tom") && !tool.name.eq_ignore_ascii_case("sudow") {
+            println!(
+                "{:<20} {}",
+                "Elevation:".bold().red(),
+                "If install/uninstall fails with permissions, run with 'sudow' (run 'tom install sudow')".red()
+            );
+        }
+
         if let Some(ver) = tool.version() {
             println!("{:<20} {}", "Version:".bold(), ver);
         }
@@ -131,16 +140,16 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !steps.is_empty() {
                 println!("\n{}", "Uninstallation Steps:".bold());
                 for (i, step) in steps.iter().enumerate() {
-                    println!("  {}. {}", i + 1, step.white());
+                    println!("  {}. {}", i + 1, step.dimmed());
                 }
             }
         }
 
         if let Some(t_list) = tips {
             if !t_list.is_empty() {
-                println!("\n{}", "Tips & Instructions:".bold().yellow());
+                println!("\n{}", "Tips & Instructions:".bold());
                 for t in t_list {
-                    println!("  💡 {}", t.yellow());
+                    println!("  💡 {}", t.dimmed());
                 }
             }
         }
@@ -150,7 +159,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
                 "\n{:<20} {} ({})",
                 "Last Modified:".bold(),
                 modified.format("%Y-%m-%d %H:%M:%S"),
-                tool.modified_relative.cyan()
+                tool.modified_relative.dimmed()
             );
         }
     } else if let Some(entry) = registry.get(tool_name) {
@@ -160,6 +169,15 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         if let Some(ref desc) = entry.description {
             println!("{:<20} {}", "Description:".bold(), desc);
         }
+
+        if !entry.name.eq_ignore_ascii_case("tom") && !entry.name.eq_ignore_ascii_case("sudow") {
+            println!(
+                "{:<20} {}",
+                "Elevation:".bold().red(),
+                "If install/uninstall fails with permissions, run with 'sudow' (run 'tom install sudow')".red()
+            );
+        }
+
         println!("{:<20} {}", "Repository URL:".bold(), entry.repository.underline());
         if let Some(ref tags) = entry.tags {
             println!("{:<20} {}", "Tags:".bold(), tags.join(", "));
@@ -187,16 +205,16 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !steps.is_empty() {
                 println!("\n{}", "Uninstallation Steps:".bold());
                 for (i, step) in steps.iter().enumerate() {
-                    println!("  {}. {}", i + 1, step.cyan());
+                    println!("  {}. {}", i + 1, step.dimmed());
                 }
             }
         }
 
         if let Some(ref tips) = entry.tips {
             if !tips.is_empty() {
-                println!("\n{}", "Tips & Instructions:".bold().yellow());
+                println!("\n{}", "Tips & Instructions:".bold());
                 for t in tips {
-                    println!("  💡 {}", t.yellow());
+                    println!("  💡 {}", t.dimmed());
                 }
             }
         }

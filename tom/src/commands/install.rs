@@ -40,6 +40,10 @@ pub fn execute(target_tool: Option<&str>, all: bool, auto_yes: bool, tools_dir: 
 fn install_single(tool_name: &str, auto_yes: bool, registry: &Registry, tools_dir: &Path) {
     println!("Installing {}...", tool_name.cyan().bold());
 
+    if !tool_name.eq_ignore_ascii_case("tom") && !tool_name.eq_ignore_ascii_case("sudow") {
+        println!("  {} If installation fails due to permissions, run with '{}' (install via '{}')", "🛡️ Note:".red().bold(), "sudow".red().bold(), "tom install sudow".red());
+    }
+
     let target_path = tools_dir.join(tool_name);
     let reg_entry = registry.get(tool_name);
     let tool_opt = find_tool(tools_dir, tool_name);
@@ -70,7 +74,7 @@ fn install_single(tool_name: &str, auto_yes: bool, registry: &Registry, tools_di
         if !t_list.is_empty() {
             println!("  {} Tips:", "💡".yellow());
             for t in t_list {
-                println!("    {} {}", "•".yellow(), t.yellow());
+                println!("    • {}", t.dimmed());
             }
         }
     }
@@ -129,8 +133,10 @@ fn install_single(tool_name: &str, auto_yes: bool, registry: &Registry, tools_di
             eprintln!("\n{} Installation notice: {}", "⚠".yellow().bold(), err);
             if !tool_name.eq_ignore_ascii_case("tom") && !tool_name.eq_ignore_ascii_case("sudow") {
                 eprintln!(
-                    "  {} If installation failed due to permissions, run with 'sudow' (run 'tom install sudow' to get sudow).",
-                    "💡".yellow()
+                    "  {} If installation failed due to permissions, run with '{}' (install via '{}')",
+                    "🛡️ Note:".red().bold(),
+                    "sudow".red().bold(),
+                    "tom install sudow".red()
                 );
             }
         }

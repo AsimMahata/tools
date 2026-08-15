@@ -34,8 +34,7 @@ uninstall_steps = [
 ]
 tips = [
     "Run inside a virtual environment for isolation",
-    "Run 'netman --help' to see network diagnostic and adapter management commands",
-    "If install/uninstall fails with permissions, run with 'sudow' (install via 'tom install sudow')"
+    "Run 'netman --help' to see network diagnostic and adapter management commands"
 ]
 
 [tools.progit]
@@ -54,8 +53,7 @@ uninstall_steps = [
 ]
 tips = [
     "The compiled binary is placed in target/release/progit.exe",
-    "Run 'progit --help' to view workflow commands",
-    "If install/uninstall fails with permissions, run with 'sudow' (install via 'tom install sudow')"
+    "Run 'progit --help' to view workflow commands"
 ]
 
 [tools.logit]
@@ -74,8 +72,7 @@ uninstall_steps = [
 ]
 tips = [
     "The compiled binary is placed in target/release/logit.exe",
-    "Run 'logit --help' to see log filtering and formatting options",
-    "If install/uninstall fails with permissions, run with 'sudow' (install via 'tom install sudow')"
+    "Run 'logit --help' to see log filtering and formatting options"
 ]
 
 [tools.sodo]
@@ -95,8 +92,7 @@ uninstall_steps = [
 ]
 tips = [
     "Run 'sodo --help' to see YouTube download and conversion commands",
-    "Requires ffmpeg in PATH for audio extraction",
-    "If install/uninstall fails with permissions, run with 'sudow' (install via 'tom install sudow')"
+    "Requires ffmpeg in PATH for audio extraction"
 ]
 
 [tools.sudow]
