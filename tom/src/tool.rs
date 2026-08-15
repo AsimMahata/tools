@@ -85,47 +85,68 @@ impl Tool {
         self.metadata.as_ref().and_then(|m| m.version.as_deref())
     }
 
-    /// Check if the tool is installed / built
+    /// Check if the tool is installed / runnable by executing `<toolname> -V`
     pub fn is_installed(&self) -> bool {
         if self.is_self {
             return true;
         }
 
+        let cmd_name = &self.name;
+
+        // 1. Primary check: Run `<toolname> -V` via shell
+        #[cfg(target_os = "windows")]
+        {
+            if let Ok(output) = std::process::Command::new("cmd")
+                .args(["/C", &format!("{} -V", cmd_name)])
+                .output()
+            {
+                if output.status.success() {
+                    return true;
+                }
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            if let Ok(output) = std::process::Command::new("sh")
+                .args(["-c", &format!("{} -V", cmd_name)])
+                .output()
+            {
+                if output.status.success() {
+                    return true;
+                }
+            }
+        }
+
+        // 2. Direct command execution check
+        if let Ok(output) = std::process::Command::new(cmd_name).arg("-V").output() {
+            if output.status.success() {
+                return true;
+            }
+        }
+        if let Ok(output) = std::process::Command::new(cmd_name).arg("--version").output() {
+            if output.status.success() {
+                return true;
+            }
+        }
+
+        // 3. Check cargo bin or local build target
         let exe_name = if cfg!(target_os = "windows") {
             format!("{}.exe", self.name)
         } else {
             self.name.clone()
         };
 
-        // 1. Check local build artifacts
-        if self.path.join("target").join("release").join(&exe_name).exists()
-            || self.path.join("target").join("debug").join(&exe_name).exists()
-        {
-            return true;
-        }
-
-        // 2. Check cargo bin
         if let Some(home) = dirs::home_dir() {
             if home.join(".cargo").join("bin").join(&exe_name).exists() {
                 return true;
             }
         }
 
-        // 3. Check Python venv or package
-        if self.path.join(".venv").exists() || self.path.join("venv").exists() {
+        if self.path.join("target").join("release").join(&exe_name).exists()
+            || self.path.join("target").join("debug").join(&exe_name).exists()
+        {
             return true;
-        }
-
-        // 4. Check Node modules
-        if self.path.join("node_modules").exists() {
-            return true;
-        }
-
-        // 5. Check if command is available in system PATH
-        if let Ok(output) = std::process::Command::new(&exe_name).arg("--version").output() {
-            if output.status.success() {
-                return true;
-            }
         }
 
         false
