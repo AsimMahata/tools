@@ -43,7 +43,28 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
 
     println!("Uninstalling {}...", tool.name.cyan().bold());
 
-    // 1. Run defined uninstallation steps
+    // 1. Prioritize local uninstall.bat or uninstall.sh if present
+    #[cfg(target_os = "windows")]
+    if tool.path.join("uninstall.bat").is_file() {
+        println!("  {} Found uninstall.bat. Executing uninstaller script...", "⚙".bold());
+        let _ = Command::new("cmd")
+            .args(["/C", "uninstall.bat"])
+            .current_dir(&tool.path)
+            .status();
+        println!("  {} uninstall.bat completed.", "✓".green());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    if tool.path.join("uninstall.sh").is_file() {
+        println!("  {} Found uninstall.sh. Executing uninstaller script...", "⚙".bold());
+        let _ = Command::new("sh")
+            .args(["-c", "sh uninstall.sh"])
+            .current_dir(&tool.path)
+            .status();
+        println!("  {} uninstall.sh completed.", "✓".green());
+    }
+
+    // 2. Run defined uninstallation steps
     if let Some(step_list) = uninstall_steps {
         if !step_list.is_empty() {
             println!("  {} Executing uninstallation steps:", "⚙".bold());

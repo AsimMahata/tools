@@ -121,7 +121,30 @@ pub fn run_install_pipeline(
         }
     }
 
-    // 3. Execute step-by-step install commands
+    // 3. Prioritize local install.bat or install.sh if present
+    #[cfg(target_os = "windows")]
+    if tool_path.join("install.bat").is_file() {
+        println!("  {} Found install.bat. Executing installer script...", "⚙".bold());
+        let status = execute_shell_command(tool_path, "cmd /c install.bat")?;
+        if !status.success() {
+            return Err("install.bat execution failed.".to_string());
+        }
+        println!("  {} install.bat completed successfully.", "✓".green());
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    if tool_path.join("install.sh").is_file() {
+        println!("  {} Found install.sh. Executing installer script...", "⚙".bold());
+        let status = execute_shell_command(tool_path, "sh install.sh")?;
+        if !status.success() {
+            return Err("install.sh execution failed.".to_string());
+        }
+        println!("  {} install.sh completed successfully.", "✓".green());
+        return Ok(());
+    }
+
+    // 4. Execute step-by-step install commands
     if let Some(step_list) = steps {
         if !step_list.is_empty() {
             println!("  {} Executing installation steps:", "⚙".bold());
