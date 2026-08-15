@@ -71,13 +71,20 @@ pub fn execute(tool_name: Option<&str>, tools_dir: &Path) {
                 format!(" ({})", change_summary.join(", "))
             };
 
+            let inst_badge = if tool.is_installed() {
+                "● installed".green()
+            } else {
+                "○ not installed".dimmed()
+            };
+
             println!(
-                "{:<18} [{}] on {}{}{}",
+                "{:<18} [{}] on {}{}{}  {}",
                 tool.name.bold(),
                 status_badge,
                 branch.cyan(),
                 sync_str.cyan(),
-                changes_str.yellow()
+                changes_str.yellow(),
+                inst_badge
             );
         }
     }
@@ -86,6 +93,13 @@ pub fn execute(tool_name: Option<&str>, tools_dir: &Path) {
 fn print_single_tool_status(tool: &Tool) {
     println!("Tool: {}", tool.name.bold().cyan());
     println!("Path: {}", tool.path.display().to_string().dimmed());
+
+    let inst_str = if tool.is_installed() {
+        "● Installed (Ready to run)".green()
+    } else {
+        "○ Not Installed / Built (Run 'tom install <tool>')".yellow()
+    };
+    println!("Installation: {}", inst_str);
 
     if !tool.git.is_repo {
         println!("{}", "Not a Git repository.".dimmed());

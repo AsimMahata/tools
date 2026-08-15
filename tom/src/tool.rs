@@ -84,6 +84,52 @@ impl Tool {
     pub fn version(&self) -> Option<&str> {
         self.metadata.as_ref().and_then(|m| m.version.as_deref())
     }
+
+    /// Check if the tool is installed / built
+    pub fn is_installed(&self) -> bool {
+        if self.is_self {
+            return true;
+        }
+
+        let exe_name = if cfg!(target_os = "windows") {
+            format!("{}.exe", self.name)
+        } else {
+            self.name.clone()
+        };
+
+        // 1. Check local build artifacts
+        if self.path.join("target").join("release").join(&exe_name).exists()
+            || self.path.join("target").join("debug").join(&exe_name).exists()
+        {
+            return true;
+        }
+
+        // 2. Check cargo bin
+        if let Some(home) = dirs::home_dir() {
+            if home.join(".cargo").join("bin").join(&exe_name).exists() {
+                return true;
+            }
+        }
+
+        // 3. Check Python venv or package
+        if self.path.join(".venv").exists() || self.path.join("venv").exists() {
+            return true;
+        }
+
+        // 4. Check Node modules
+        if self.path.join("node_modules").exists() {
+            return true;
+        }
+
+        // 5. Check if command is available in system PATH
+        if let Ok(output) = std::process::Command::new(&exe_name).arg("--version").output() {
+            if output.status.success() {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 /// Discover all tools in the configured tools directory

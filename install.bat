@@ -1,0 +1,1 @@
+cargo build; Start-Sleep -Milliseconds 400; Copy-Item .\target\debug\tom.exe C:\Users\asim\.cargo\bin\tom.exe -Force

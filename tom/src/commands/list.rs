@@ -43,16 +43,20 @@ pub fn execute(tools_dir: &Path) {
         }
     }
 
+    let install_width = 9; // "INSTALLED"
+
     // Header
     println!(
-        "{:<nw$}  {:<sw$}  {:<cw$}  {:<mw$}  {}",
+        "{:<nw$}  {:<sw$}  {:<iw$}  {:<cw$}  {:<mw$}  {}",
         "NAME".bold(),
         "STATUS".bold(),
+        "INSTALLED".bold(),
         "LAST COMMIT".bold(),
         "MODIFIED".bold(),
         "DESCRIPTION".bold(),
         nw = name_width,
         sw = status_width,
+        iw = install_width,
         cw = commit_width,
         mw = mod_width
     );
@@ -80,9 +84,13 @@ pub fn execute(tools_dir: &Path) {
             })
             .unwrap_or("");
 
+        let is_inst = tool.is_installed();
+        let install_str = if is_inst { "✓ yes" } else { "✗ no" };
+
         // Pad plain text to required column widths
         let padded_name = format!("{:<nw$}", plain_name, nw = name_width);
         let padded_status = format!("{:<sw$}", raw_status, sw = status_width);
+        let padded_inst = format!("{:<iw$}", install_str, iw = install_width);
         let padded_commit = format!("{:<cw$}", commit_str, cw = commit_width);
         let padded_mod = format!("{:<mw$}", tool.modified_relative, mw = mod_width);
 
@@ -104,13 +112,20 @@ pub fn execute(tools_dir: &Path) {
             padded_status.cyan()
         };
 
+        let colored_inst = if is_inst {
+            padded_inst.green()
+        } else {
+            padded_inst.yellow().dimmed()
+        };
+
         println!(
-            "{}  {}  {}  {}  {}",
+            "{}  {}  {}  {}  {}  {}",
             colored_name,
             colored_status,
-            padded_commit,
-            padded_mod,
-            desc_str.dimmed()
+            colored_inst,
+            padded_commit.dimmed(),
+            padded_mod.dimmed(),
+            desc_str
         );
     }
 
