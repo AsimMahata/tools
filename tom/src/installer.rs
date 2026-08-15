@@ -166,16 +166,25 @@ pub fn run_install_pipeline(
 
 pub fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStatus, String> {
     #[cfg(target_os = "windows")]
-    let status = Command::new("cmd")
-        .args(["/C", cmd])
-        .current_dir(cwd)
-        .status()
-        .map_err(|e| format!("Failed to execute command '{}': {}", cmd, e))?;
+    let mut command = Command::new("cmd");
+    #[cfg(target_os = "windows")]
+    {
+        command.args(["/C", cmd]);
+        if let Some(user_local) = dirs::data_local_dir() {
+            let temp_dir = user_local.join("Temp");
+            let _ = fs::create_dir_all(&temp_dir);
+            command.env("TEMP", &temp_dir);
+            command.env("TMP", &temp_dir);
+        }
+    }
 
     #[cfg(not(target_os = "windows"))]
-    let status = Command::new("sh")
-        .args(["-c", cmd])
-        .current_dir(cwd)
+    let mut command = Command::new("sh");
+    #[cfg(not(target_os = "windows"))]
+    command.args(["-c", cmd]);
+
+    command.current_dir(cwd);
+    let status = command
         .status()
         .map_err(|e| format!("Failed to execute command '{}': {}", cmd, e))?;
 
