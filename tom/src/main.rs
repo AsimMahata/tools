@@ -66,6 +66,10 @@ enum Commands {
         /// Install all tools defined in the registry
         #[arg(short = 'a', long = "all")]
         all: bool,
+
+        /// Automatically confirm prompts (e.g. auto-fetch)
+        #[arg(short = 'y', long = "yes")]
+        yes: bool,
     },
 
     /// Run uninstallation command for a tool (keeps repository files)
@@ -125,8 +129,8 @@ fn main() {
         Some(Commands::Fetch { tool, all }) => {
             commands::fetch::execute(tool.as_deref(), all, &tools_dir);
         }
-        Some(Commands::Install { tool, all }) => {
-            commands::install::execute(tool.as_deref(), all, &tools_dir);
+        Some(Commands::Install { tool, all, yes }) => {
+            commands::install::execute(tool.as_deref(), all, yes, &tools_dir);
         }
         Some(Commands::Uninstall { tool }) => {
             commands::uninstall::execute(&tool, &tools_dir);
