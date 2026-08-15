@@ -12,14 +12,6 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
     let _ = fs::create_dir_all(target_path);
     let target_str = target_path.to_str().unwrap_or(".");
 
-    // Check if target directory already has a git repo
-    if target_path.join(".git").exists() {
-        return Err(format!(
-            "Directory already contains a Git repository: {}",
-            target_path.display()
-        ));
-    }
-
     // 1. Initialize git in target directory
     let init_out = Command::new("git")
         .args(["-C", target_str, "init"])
@@ -31,7 +23,7 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
         return Err(format!("git init failed: {}", stderr));
     }
 
-    // 2. Add remote origin
+    // 2. Set or add remote origin
     let _ = Command::new("git")
         .args(["-C", target_str, "remote", "remove", "origin"])
         .output();
@@ -208,7 +200,7 @@ pub fn uninstall_tool(
         }
     }
 
-    // 1. Run sequential uninstall steps if specified
+    // 1. Run sequential uninstall steps first
     if let Some(step_list) = steps {
         if !step_list.is_empty() {
             println!("  {} Executing uninstallation steps:", "→".cyan());

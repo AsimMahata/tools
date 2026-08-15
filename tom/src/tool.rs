@@ -40,13 +40,14 @@ impl Tool {
         // Inspect Git status
         let git = GitStatus::inspect(&path);
 
-        // Check if directory is just an uninstalled stub with only README.md
+        // Check if directory actually contains installed source code (not just a README stub)
         let has_code = path.join("Cargo.toml").exists()
             || path.join("pyproject.toml").exists()
             || path.join("package.json").exists()
             || path.join("src").exists()
-            || is_self
-            || git.is_repo;
+            || path.join("setup.py").exists()
+            || path.join("go.mod").exists()
+            || is_self;
 
         if !has_code {
             return None;

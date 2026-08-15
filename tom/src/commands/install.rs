@@ -75,14 +75,15 @@ fn install_single(entry: &RegistryEntry, tools_dir: &Path) {
 
     let target_path = tools_dir.join(&entry.name);
 
-    if target_path.exists() {
-        if find_tool(tools_dir, &entry.name).is_some() {
+    if let Some(tool) = find_tool(tools_dir, &entry.name) {
+        if !tool.is_self {
             println!("  {} {} is already installed at {}", "ℹ".cyan(), entry.name.bold(), target_path.display());
+            println!("  Run 'tom update {}' to pull updates or 'tom uninstall {}' to reinstall.", entry.name, entry.name);
             return;
         }
     }
 
-    // 1. Clone repository
+    // 1. Clone/populate full repository
     print!("  Cloning repository... ");
     match clone_repository(&entry.repository, &target_path) {
         Ok(_) => {
@@ -107,7 +108,7 @@ fn install_single(entry: &RegistryEntry, tools_dir: &Path) {
             println!("\n{} {} is installed and ready to use.", "✓".green().bold(), entry.name.bold());
         }
         Err(err) => {
-            eprintln!("\n{} Installation failed: {}", "⚠".yellow().bold(), err);
+            eprintln!("\n{} Installation notice: {}", "⚠".yellow().bold(), err);
         }
     }
 }
