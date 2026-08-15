@@ -2,11 +2,25 @@
 
 A curated collection of modular, independent command-line utilities and personal tools managed by **TOM** (Tool Manager).
 
-Each tool in this workspace is an independent Git repository. This parent repository serves as an index and landing page for the tool suite.
+Each tool in this workspace is an independent Git repository. This parent repository tracks the ecosystem index, tool documentation stubs, and the TOM orchestrator.
 
 ---
 
-## Tool Index
+## ⚡ Quick Start: 1-Click Windows Installation
+
+To install **TOM** and add it to your system PATH, run the included batch installer:
+
+```cmd
+install.bat
+```
+
+Or double-click `install.bat` in File Explorer.
+
+> **Prerequisites**: [Rust & Cargo](https://rustup.rs/) installed on your machine.
+
+---
+
+## 🛠️ Tool Index
 
 | Tool | Description | Repository | Role |
 | :--- | :--- | :--- | :--- |
@@ -18,55 +32,71 @@ Each tool in this workspace is an independent Git repository. This parent reposi
 
 ---
 
-## Getting Started
-
-### Recommended Setup
-
-> [!TIP]
-> **Dedicated Tools Directory**
-> It is recommended to clone TOM into a dedicated tools directory (e.g. `C:\tools\tom`, `D:\dev-tools\tom`, or `~/tools/tom`).
->
-> During its initial setup, TOM determines where it was cloned, records its parent directory as the managed `tools_directory`, and installs/manages all other tools alongside itself as siblings.
-
-Example:
+## 📂 Architecture & Directory Model
 
 ```text
-tools/                     ← Dedicated parent tools directory
-├── README.md              ← Index of all tools
-├── .gitignore
-├── config.toml            ← Recorded tools_directory
-├── tom/                   ← TOM tool manager
-├── netman/                ← Sibling tool (independent Git repo)
-├── progit/                ← Sibling tool (independent Git repo)
-├── logit/                 ← Sibling tool (independent Git repo)
-└── sodo/                  ← Sibling tool (independent Git repo)
+tools/                     ← Dedicated parent tools repository
+├── README.md              ← Ecosystem landing page
+├── install.bat            ← 1-click Windows installer
+├── registry.toml          ← Tool metadata, build pipelines & tips
+├── tom/                   ← TOM tool manager (full source tracked)
+├── netman/                ← Sibling tool (independent Git repo / README stub)
+├── progit/                ← Sibling tool (independent Git repo / README stub)
+├── logit/                 ← Sibling tool (independent Git repo / README stub)
+└── sodo/                  ← Sibling tool (independent Git repo / README stub)
 ```
 
 ---
 
-## Managing Tools with TOM
+## 🚀 Core Lifecycle Commands
 
-### Essential Commands
+TOM provides a decoupled 4-command lifecycle for managing your tools:
 
+### 1. Discovery & Status
 ```bash
-# List all tools and installation status
+# Formatted table of all tools with Git & Installation state
 tom list
 
-# Inspect detailed metadata and Git state
-tom info netman
-
-# Check Git working tree status across all tools
+# Detailed Git sync + installation status across all tools
 tom status
 
-# Install a tool from registry
-tom install netman
+# Detailed metadata, requirements, and commit history for a tool
+tom info <tool>
+```
 
-# Bootstrap/install all tools defined in registry
-tom install --all
+### 2. Fetching & Updating (Source Code)
+```bash
+# Fetch a tool's source code from GitHub into its directory
+tom fetch <tool>
 
-# Safely update a tool (pulls from Git and rebuilds)
-tom update netman
+# Fetch all tools defined in the registry
+tom fetch all
 
-# Open a tool in your editor (VS Code or system default)
-tom open netman
+# Pull latest Git commits in-place and rebuild if updated
+tom update <tool>
+tom update all
+```
+
+### 3. Building & Installing (Binaries)
+```bash
+# Display requirements & tips, then compile and install
+tom install <tool>
+
+# Install all tools in the registry
+tom install all
+```
+
+### 4. Uninstallation & Unfetching
+```bash
+# Run uninstall scripts/cleanup while keeping the local repository
+tom uninstall <tool>
+
+# Purge source code and .git while preserving README.md for the parent repository
+tom unfetch <tool>
+```
+
+### 5. Navigation
+```bash
+# Open tool directory in VS Code or default file manager
+tom open <tool>
 ```
