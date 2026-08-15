@@ -9,10 +9,10 @@ pub struct ToolMetadata {
     pub version: Option<String>,
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub install_cmd: Option<String>,
-    pub uninstall_cmd: Option<String>,
-    pub requirements: Option<String>,
-    pub tips: Option<String>,
+    pub requirements: Option<Vec<String>>,
+    pub install_steps: Option<Vec<String>>,
+    pub uninstall_steps: Option<Vec<String>>,
+    pub tips: Option<Vec<String>>,
 }
 
 impl ToolMetadata {

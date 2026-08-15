@@ -85,27 +85,69 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         }
 
         let reg_entry = registry.get(&tool.name);
-        let req = tool.metadata.as_ref().and_then(|m| m.requirements.as_deref()).or_else(|| reg_entry.and_then(|r| r.requirements.as_deref()));
-        let tip = tool.metadata.as_ref().and_then(|m| m.tips.as_deref()).or_else(|| reg_entry.and_then(|r| r.tips.as_deref()));
-        let inst_cmd = tool.metadata.as_ref().and_then(|m| m.install_cmd.as_deref()).or_else(|| reg_entry.and_then(|r| r.install_cmd.as_deref()));
-        let uninst_cmd = tool.metadata.as_ref().and_then(|m| m.uninstall_cmd.as_deref()).or_else(|| reg_entry.and_then(|r| r.uninstall_cmd.as_deref()));
+        let reqs = tool
+            .metadata
+            .as_ref()
+            .and_then(|m| m.requirements.as_deref())
+            .or_else(|| reg_entry.and_then(|r| r.requirements.as_deref()));
 
-        if let Some(r) = req {
-            println!("{:<20} {}", "Requirements:".bold(), r.cyan());
+        let inst_steps = tool
+            .metadata
+            .as_ref()
+            .and_then(|m| m.install_steps.as_deref())
+            .or_else(|| reg_entry.and_then(|r| r.install_steps.as_deref()));
+
+        let uninst_steps = tool
+            .metadata
+            .as_ref()
+            .and_then(|m| m.uninstall_steps.as_deref())
+            .or_else(|| reg_entry.and_then(|r| r.uninstall_steps.as_deref()));
+
+        let tips = tool
+            .metadata
+            .as_ref()
+            .and_then(|m| m.tips.as_deref())
+            .or_else(|| reg_entry.and_then(|r| r.tips.as_deref()));
+
+        if let Some(r_list) = reqs {
+            if !r_list.is_empty() {
+                println!("\n{}", "Requirements:".bold());
+                for r in r_list {
+                    println!("  • {}", r.cyan());
+                }
+            }
         }
-        if let Some(t) = tip {
-            println!("{:<20} {}", "Tips:".bold(), t.dimmed());
+
+        if let Some(steps) = inst_steps {
+            if !steps.is_empty() {
+                println!("\n{}", "Installation Steps:".bold());
+                for (i, step) in steps.iter().enumerate() {
+                    println!("  {}. {}", i + 1, step.yellow());
+                }
+            }
         }
-        if let Some(ic) = inst_cmd {
-            println!("{:<20} {}", "Install Cmd:".bold(), ic.dimmed());
+
+        if let Some(steps) = uninst_steps {
+            if !steps.is_empty() {
+                println!("\n{}", "Uninstallation Steps:".bold());
+                for (i, step) in steps.iter().enumerate() {
+                    println!("  {}. {}", i + 1, step.dimmed());
+                }
+            }
         }
-        if let Some(uc) = uninst_cmd {
-            println!("{:<20} {}", "Uninstall Cmd:".bold(), uc.dimmed());
+
+        if let Some(t_list) = tips {
+            if !t_list.is_empty() {
+                println!("\n{}", "Tips & Instructions:".bold());
+                for t in t_list {
+                    println!("  💡 {}", t.dimmed());
+                }
+            }
         }
 
         if let Some(modified) = tool.modified_time {
             println!(
-                "{:<20} {} ({})",
+                "\n{:<20} {} ({})",
                 "Last Modified:".bold(),
                 modified.format("%Y-%m-%d %H:%M:%S"),
                 tool.modified_relative.dimmed()
@@ -122,15 +164,43 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         if let Some(ref tags) = entry.tags {
             println!("{:<20} {}", "Tags:".bold(), tags.join(", "));
         }
-        if let Some(ref req) = entry.requirements {
-            println!("{:<20} {}", "Requirements:".bold(), req.cyan());
+
+        if let Some(ref reqs) = entry.requirements {
+            if !reqs.is_empty() {
+                println!("\n{}", "Requirements:".bold());
+                for r in reqs {
+                    println!("  • {}", r.cyan());
+                }
+            }
         }
-        if let Some(ref tip) = entry.tips {
-            println!("{:<20} {}", "Tips:".bold(), tip.dimmed());
+
+        if let Some(ref steps) = entry.install_steps {
+            if !steps.is_empty() {
+                println!("\n{}", "Installation Steps:".bold());
+                for (i, step) in steps.iter().enumerate() {
+                    println!("  {}. {}", i + 1, step.yellow());
+                }
+            }
         }
-        if let Some(ref ic) = entry.install_cmd {
-            println!("{:<20} {}", "Install Cmd:".bold(), ic.dimmed());
+
+        if let Some(ref steps) = entry.uninstall_steps {
+            if !steps.is_empty() {
+                println!("\n{}", "Uninstallation Steps:".bold());
+                for (i, step) in steps.iter().enumerate() {
+                    println!("  {}. {}", i + 1, step.dimmed());
+                }
+            }
         }
+
+        if let Some(ref tips) = entry.tips {
+            if !tips.is_empty() {
+                println!("\n{}", "Tips & Instructions:".bold());
+                for t in tips {
+                    println!("  💡 {}", t.dimmed());
+                }
+            }
+        }
+
         println!("\nRun 'tom install {}' to clone and install this tool.", entry.name);
     } else {
         eprintln!(

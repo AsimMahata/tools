@@ -1,51 +1,96 @@
 # TOM Tool Registry
-# Maps known tool names to their Git repositories, build commands, and requirements
+# Maps known tool names to their Git repositories, requirements, and step-by-step install/uninstall procedures
 
 [tools.tom]
 name = "tom"
 description = "Tool Manager — CLI to manage personal tools and repositories"
 repository = "https://github.com/AsimMahata/tom.git"
 tags = ["tools", "cli", "git", "manager"]
-install_cmd = "cargo build --release"
-requirements = "Rust toolchain (cargo 1.75+)"
-tips = "Clone into a dedicated parent folder like C:\\tools\\tom"
+requirements = [
+    "Rust toolchain (cargo 1.75+)"
+]
+install_steps = [
+    "cargo build --release"
+]
+tips = [
+    "Clone into a dedicated parent folder like C:\\tools\\tom",
+    "Install binary to ~/.cargo/bin/tom.exe for global terminal access"
+]
 
 [tools.netman]
 name = "netman"
 description = "Windows network management CLI"
 repository = "https://github.com/AsimMahata/netman.git"
 tags = ["network", "cli", "windows"]
-install_cmd = "pip install -e ."
-uninstall_cmd = "pip uninstall -y netman"
-requirements = "Python 3.10+ and pip"
-tips = "Run inside a virtual environment or install in editable mode"
+requirements = [
+    "Python 3.10+",
+    "pip in PATH"
+]
+install_steps = [
+    "pip install -e ."
+]
+uninstall_steps = [
+    "pip uninstall -y netman"
+]
+tips = [
+    "Run inside a virtual environment for isolation",
+    "Run 'netman --help' to see network diagnostic and adapter management commands"
+]
 
 [tools.progit]
 name = "progit"
 description = "Git productivity enhancements and workflow helper"
 repository = "https://github.com/AsimMahata/progit.git"
 tags = ["git", "workflow", "productivity"]
-install_cmd = "cargo build --release"
-uninstall_cmd = "cargo clean"
-requirements = "Rust toolchain (cargo in PATH)"
-tips = "Compiles to standalone executable in target/release"
+requirements = [
+    "Rust toolchain (cargo in PATH)"
+]
+install_steps = [
+    "cargo build --release"
+]
+uninstall_steps = [
+    "cargo clean"
+]
+tips = [
+    "The compiled binary is placed in target/release/progit.exe",
+    "Run 'progit --help' to view workflow commands"
+]
 
 [tools.logit]
 name = "logit"
 description = "Log inspection and management utility"
 repository = "https://github.com/AsimMahata/logit.git"
 tags = ["logging", "cli", "tools"]
-install_cmd = "cargo build --release"
-uninstall_cmd = "cargo clean"
-requirements = "Rust toolchain (cargo in PATH)"
-tips = "Compiles to standalone binary in target/release/logit.exe"
+requirements = [
+    "Rust toolchain (cargo in PATH)"
+]
+install_steps = [
+    "cargo build --release"
+]
+uninstall_steps = [
+    "cargo clean"
+]
+tips = [
+    "The compiled binary is placed in target/release/logit.exe",
+    "Run 'logit --help' to see log filtering and formatting options"
+]
 
 [tools.sodo]
 name = "sodo"
 description = "Task management and todo tracker CLI"
 repository = "https://github.com/AsimMahata/sodo.git"
 tags = ["todo", "productivity", "cli"]
-install_cmd = "pip install -e ."
-uninstall_cmd = "pip uninstall -y sodo"
-requirements = "Python 3.10+ and pip"
-tips = "Requires active Python environment with click/typer"
+requirements = [
+    "Python 3.10+",
+    "pip in PATH"
+]
+install_steps = [
+    "pip install -e ."
+]
+uninstall_steps = [
+    "pip uninstall -y sodo"
+]
+tips = [
+    "Requires active Python environment with click/typer",
+    "Use 'sodo --help' to inspect todo management commands"
+]

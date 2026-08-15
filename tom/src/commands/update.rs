@@ -2,7 +2,7 @@ use colored::*;
 use std::path::Path;
 
 use crate::git::GitStatus;
-use crate::installer::build_tool;
+use crate::installer::run_install_pipeline;
 use crate::tool::{discover_tools, find_tool, Tool};
 
 pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
@@ -57,11 +57,7 @@ fn update_single_tool(tool: &Tool) {
             // Rebuild if needed
             if msg.contains("Updating") || msg.contains("Fast-forward") {
                 println!("  {} Rebuilding {}...", "→".cyan(), tool.name);
-                match build_tool(&tool.path, None, None, None) {
-                    Ok(Some(b_msg)) => println!("  {} {}", "✓".green(), b_msg),
-                    Ok(None) => {}
-                    Err(err) => eprintln!("  {} Build error: {}", "⚠".yellow(), err),
-                }
+                let _ = run_install_pipeline(&tool.path, None, None, None);
             }
         }
         Err(err) => {

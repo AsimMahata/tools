@@ -29,19 +29,19 @@ pub fn execute(tool_name: &str, force: bool, tools_dir: &Path) {
         return;
     }
 
-    let uninstall_cmd = tool
+    let uninstall_steps = tool
         .metadata
         .as_ref()
-        .and_then(|m| m.uninstall_cmd.as_deref())
+        .and_then(|m| m.uninstall_steps.as_deref())
         .or_else(|| {
             registry
                 .get(&tool.name)
-                .and_then(|r| r.uninstall_cmd.as_deref())
+                .and_then(|r| r.uninstall_steps.as_deref())
         });
 
     println!("Uninstalling {}...", tool.name.cyan().bold());
 
-    match uninstall_tool(&tool.path, &tool.name, force, uninstall_cmd) {
+    match uninstall_tool(&tool.path, &tool.name, force, uninstall_steps) {
         Ok(_) => {
             println!("{} Successfully uninstalled {}", "✓".green().bold(), tool.name.bold());
         }

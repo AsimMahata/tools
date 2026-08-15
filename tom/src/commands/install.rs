@@ -1,7 +1,7 @@
 use colored::*;
 use std::path::Path;
 
-use crate::installer::{build_tool, clone_repository};
+use crate::installer::{clone_repository, run_install_pipeline};
 use crate::registry::{Registry, RegistryEntry};
 use crate::tool::find_tool;
 
@@ -50,9 +50,9 @@ pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
             description: None,
             repository: tool_name.to_string(),
             tags: None,
-            install_cmd: None,
-            uninstall_cmd: None,
             requirements: None,
+            install_steps: None,
+            uninstall_steps: None,
             tips: None,
         };
         install_single(&entry, tools_dir);
@@ -96,21 +96,18 @@ fn install_single(entry: &RegistryEntry, tools_dir: &Path) {
         }
     }
 
-    // 2. Run build / installation procedure with requirements & tips
-    match build_tool(
+    // 2. Run step-by-step install pipeline
+    match run_install_pipeline(
         &target_path,
-        entry.install_cmd.as_deref(),
+        entry.install_steps.as_deref(),
         entry.requirements.as_deref(),
         entry.tips.as_deref(),
     ) {
-        Ok(Some(msg)) => {
-            println!("  {} {}", "✓".green(), msg);
+        Ok(_) => {
+            println!("\n{} {} is installed and ready to use.", "✓".green().bold(), entry.name.bold());
         }
-        Ok(None) => {}
         Err(err) => {
-            eprintln!("  {} Build notice: {}", "⚠".yellow(), err);
+            eprintln!("\n{} Installation failed: {}", "⚠".yellow().bold(), err);
         }
     }
-
-    println!("\n{} {} is ready.", "✓".green().bold(), entry.name.bold());
 }
