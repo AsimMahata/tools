@@ -53,7 +53,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
     if tool.path.join("uninstall.bat").is_file() {
         println!("  {} Found uninstall.bat. Executing uninstaller script...", "⚙".bold());
         let _ = Command::new("cmd")
-            .args(["/C", "uninstall.bat"])
+            .args(["/C", "uninstall.bat", "-y"])
             .current_dir(&tool.path)
             .status();
         println!("  {} uninstall.bat completed.", "✓".green());
@@ -64,7 +64,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
     if tool.path.join("uninstall.sh").is_file() {
         println!("  {} Found uninstall.sh. Executing uninstaller script...", "⚙".bold());
         let _ = Command::new("sh")
-            .args(["-c", "sh uninstall.sh"])
+            .args(["-c", "sh uninstall.sh -y"])
             .current_dir(&tool.path)
             .status();
         println!("  {} uninstall.sh completed.", "✓".green());

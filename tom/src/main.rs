@@ -11,6 +11,29 @@ mod tool;
 
 use config::Config;
 
+#[cfg(windows)]
+extern "system" fn console_ctrl_handler(ctrl_type: u32) -> i32 {
+    // 0 = CTRL_C_EVENT, 1 = CTRL_BREAK_EVENT
+    if ctrl_type == 0 || ctrl_type == 1 {
+        std::process::exit(130);
+    }
+    0
+}
+
+#[cfg(windows)]
+fn init_ctrl_handler() {
+    type HandlerRoutine = Option<unsafe extern "system" fn(u32) -> i32>;
+    extern "system" {
+        fn SetConsoleCtrlHandler(handler: HandlerRoutine, add: i32) -> i32;
+    }
+    unsafe {
+        SetConsoleCtrlHandler(Some(console_ctrl_handler), 1);
+    }
+}
+
+#[cfg(not(windows))]
+fn init_ctrl_handler() {}
+
 #[derive(Parser, Debug)]
 #[command(
     name = "tom",
@@ -112,6 +135,8 @@ enum Commands {
 }
 
 fn main() {
+    init_ctrl_handler();
+
     let cli = Cli::parse();
     let (config, _) = Config::load_and_persist();
     let tools_dir = config.resolve_tools_directory(cli.dir.as_deref());

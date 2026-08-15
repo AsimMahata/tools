@@ -125,7 +125,7 @@ pub fn run_install_pipeline(
     #[cfg(target_os = "windows")]
     if tool_path.join("install.bat").is_file() {
         println!("  {} Found install.bat. Executing installer script...", "⚙".bold());
-        let status = execute_shell_command(tool_path, "cmd /c install.bat")?;
+        let status = execute_shell_command(tool_path, "cmd /c install.bat -y")?;
         if !status.success() {
             return Err("install.bat execution failed.".to_string());
         }
@@ -136,7 +136,7 @@ pub fn run_install_pipeline(
     #[cfg(not(target_os = "windows"))]
     if tool_path.join("install.sh").is_file() {
         println!("  {} Found install.sh. Executing installer script...", "⚙".bold());
-        let status = execute_shell_command(tool_path, "sh install.sh")?;
+        let status = execute_shell_command(tool_path, "sh install.sh -y")?;
         if !status.success() {
             return Err("install.sh execution failed.".to_string());
         }
