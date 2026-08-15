@@ -5,99 +5,78 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-/// Clone / populate repository into target directory reliably
+/// Clone repository using `git clone` into target directory
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
+    let parent_dir = target_path.parent().unwrap_or_else(|| Path::new("."));
+    let tool_name = target_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("tool");
+    let temp_clone_path = parent_dir.join(format!(".tom_clone_{}", tool_name));
+
+    // Clean up any stale temp clone directory
+    let _ = remove_dir_all_force(&temp_clone_path);
+
+    // 1. Run git clone
+    let output = Command::new("git")
+        .args(["clone", repo_url, temp_clone_path.to_str().unwrap_or(".")])
+        .output()
+        .map_err(|e| format!("Failed to execute git clone: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let _ = remove_dir_all_force(&temp_clone_path);
+        return Err(format!("git clone failed:\n{}", stderr.trim()));
+    }
+
+    // 2. Ensure target directory exists
     let _ = fs::create_dir_all(target_path);
-    let target_str = target_path.to_str().unwrap_or(".");
+    clear_readonly(target_path);
 
-    // 1. Initialize git in target directory
-    let init_out = Command::new("git")
-        .args(["-C", target_str, "init"])
-        .output()
-        .map_err(|e| format!("Failed to run git init: {}", e))?;
+    // 3. Move all cloned contents into target directory
+    let entries = fs::read_dir(&temp_clone_path)
+        .map_err(|e| format!("Failed to read cloned files: {}", e))?;
 
-    if !init_out.status.success() {
-        let stderr = String::from_utf8_lossy(&init_out.stderr);
-        return Err(format!("git init failed: {}", stderr));
-    }
+    for entry in entries.flatten() {
+        let src = entry.path();
+        let name = entry.file_name();
+        let dest = target_path.join(&name);
 
-    // 2. Set or add remote origin
-    let _ = Command::new("git")
-        .args(["-C", target_str, "remote", "remove", "origin"])
-        .output();
+        if dest.exists() {
+            clear_readonly(&dest);
+            if dest.is_dir() {
+                let _ = remove_dir_all_force(&dest);
+            } else {
+                let _ = fs::remove_file(&dest);
+            }
+        }
 
-    let remote_out = Command::new("git")
-        .args(["-C", target_str, "remote", "add", "origin", repo_url])
-        .output()
-        .map_err(|e| format!("Failed to set git remote: {}", e))?;
-
-    if !remote_out.status.success() {
-        let stderr = String::from_utf8_lossy(&remote_out.stderr);
-        return Err(format!("git remote add failed: {}", stderr));
-    }
-
-    // 3. Fetch all objects from origin
-    let fetch_out = Command::new("git")
-        .args(["-C", target_str, "fetch", "origin"])
-        .output()
-        .map_err(|e| format!("Failed to run git fetch: {}", e))?;
-
-    if !fetch_out.status.success() {
-        let stderr = String::from_utf8_lossy(&fetch_out.stderr);
-        return Err(format!("git fetch failed:\n{}", stderr));
-    }
-
-    // 4. Detect default remote branch (main or master)
-    let branch_out = Command::new("git")
-        .args(["-C", target_str, "remote", "show", "origin"])
-        .output();
-
-    let mut branch = "main".to_string();
-    if let Ok(b_out) = branch_out {
-        let text = String::from_utf8_lossy(&b_out.stdout);
-        for line in text.lines() {
-            if line.contains("HEAD branch:") {
-                if let Some(b) = line.split(':').nth(1) {
-                    let trimmed = b.trim();
-                    if !trimmed.is_empty() {
-                        branch = trimmed.to_string();
-                    }
-                }
+        if let Err(_) = fs::rename(&src, &dest) {
+            if src.is_dir() {
+                let _ = copy_dir_all(&src, &dest);
+            } else {
+                let _ = fs::copy(&src, &dest);
             }
         }
     }
 
-    // 5. Checkout the branch cleanly and force overwrite any stub files
-    let checkout_out = Command::new("git")
-        .args([
-            "-C",
-            target_str,
-            "checkout",
-            "-f",
-            "-B",
-            &branch,
-            &format!("origin/{}", branch),
-        ])
-        .output()
-        .map_err(|e| format!("Failed to checkout branch: {}", e))?;
+    // 4. Remove temp clone directory
+    let _ = remove_dir_all_force(&temp_clone_path);
 
-    if !checkout_out.status.success() {
-        let _ = Command::new("git")
-            .args(["-C", target_str, "checkout", "-f", &branch])
-            .output();
+    Ok(())
+}
+
+fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &dst.join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.join(entry.file_name()))?;
+        }
     }
-
-    let _ = Command::new("git")
-        .args([
-            "-C",
-            target_str,
-            "branch",
-            "-u",
-            &format!("origin/{}", branch),
-            &branch,
-        ])
-        .output();
-
     Ok(())
 }
 
