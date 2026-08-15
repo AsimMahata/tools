@@ -6,7 +6,9 @@ use crate::installer::run_install_pipeline;
 use crate::tool::{discover_tools, find_tool, Tool};
 
 pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
-    if all {
+    let is_all = all || target_tool.map(|t| t.eq_ignore_ascii_case("all")).unwrap_or(false);
+
+    if is_all {
         println!("{}", "Updating all tools...".bold().cyan());
         println!("{}", "=====================".dimmed());
 

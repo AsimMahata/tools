@@ -8,7 +8,9 @@ use crate::tool::find_tool;
 pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
     let registry = Registry::load(tools_dir);
 
-    if all {
+    let is_all = all || target_tool.map(|t| t.eq_ignore_ascii_case("all")).unwrap_or(false);
+
+    if is_all {
         println!("{}", "Fetching all tools from registry...".bold().cyan());
         println!("{}", "===================================".dimmed());
 
