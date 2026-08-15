@@ -165,17 +165,21 @@ pub fn run_install_pipeline(
 }
 
 pub fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStatus, String> {
+    let cwd_str = cwd.to_str().unwrap_or(".");
+
     #[cfg(target_os = "windows")]
     let mut command = {
         let mut c = Command::new("powershell");
-        c.args(["-NoProfile", "-Command", cmd]);
+        let script = format!("Set-Location -LiteralPath '{}'; {}", cwd_str, cmd);
+        c.args(["-NoProfile", "-Command", &script]);
         c
     };
 
     #[cfg(not(target_os = "windows"))]
     let mut command = {
         let mut c = Command::new("sh");
-        c.args(["-c", cmd]);
+        let script = format!("cd '{}' && {}", cwd_str, cmd);
+        c.args(["-c", &script]);
         c
     };
 
