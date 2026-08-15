@@ -5,7 +5,7 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-/// Clone repository using native `git clone` in the parent directory
+/// Clone repository reliably using an atomic temp-swap to avoid Windows NTFS DELETE_PENDING collisions
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
     let parent_dir = target_path.parent().unwrap_or_else(|| Path::new("."));
     let tool_name = target_path
@@ -13,37 +13,57 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
         .and_then(|n| n.to_str())
         .unwrap_or("tool");
 
-    let readme_path = target_path.join("README.md");
-    let readme_content = fs::read_to_string(&readme_path).ok();
+    let temp_name = format!(".tom_tmp_{}", tool_name);
+    let temp_path = parent_dir.join(&temp_name);
 
-    // 1. Remove old directory first so git clone gets a fresh target
-    if target_path.exists() {
-        if let Err(e) = remove_dir_all_force(target_path) {
-            return Err(format!(
-                "Failed to remove old directory {}: {}",
-                target_path.display(),
-                e
-            ));
-        }
-    }
+    // Clean up any stale temp clone directory
+    let _ = remove_dir_all_force(&temp_path);
 
-    // 2. Execute native git clone directly in parent directory with relative folder name
+    // 1. Run git clone into a brand-new directory name (never collides with open locks or DELETE_PENDING)
     let output = Command::new("git")
-        .args(["clone", repo_url, tool_name])
+        .args(["clone", repo_url, &temp_name])
         .current_dir(parent_dir)
         .output()
         .map_err(|e| format!("Failed to execute git clone: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        // Restore stub directory with README.md if clone failed
-        if let Some(content) = readme_content {
-            let _ = fs::create_dir_all(target_path);
-            let _ = fs::write(&readme_path, content);
-        }
+        let _ = remove_dir_all_force(&temp_path);
         return Err(format!("git clone failed:\n{}", stderr.trim()));
     }
 
+    // 2. Clone succeeded! Remove the old stub directory
+    if target_path.exists() {
+        let _ = remove_dir_all_force(target_path);
+        sleep(Duration::from_millis(50));
+    }
+
+    // 3. Move cloned repository to target destination
+    if let Err(_) = fs::rename(&temp_path, target_path) {
+        let _ = fs::create_dir_all(target_path);
+        clear_readonly(target_path);
+        let _ = copy_dir_all(&temp_path, target_path);
+        let _ = remove_dir_all_force(&temp_path);
+    }
+
+    Ok(())
+}
+
+fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    clear_readonly(dst);
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let path = entry.path();
+        let name = entry.file_name();
+        let target = dst.join(name);
+        if path.is_dir() {
+            copy_dir_all(&path, &target)?;
+        } else {
+            clear_readonly(&path);
+            let _ = fs::copy(&path, &target);
+        }
+    }
     Ok(())
 }
 
