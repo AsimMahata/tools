@@ -77,20 +77,20 @@ tips = [
 
 [tools.sodo]
 name = "sodo"
-description = "Task management and todo tracker CLI"
+description = "YouTube → MP3 downloader CLI"
 repository = "https://github.com/AsimMahata/sodo.git"
-tags = ["todo", "productivity", "cli"]
+tags = ["youtube", "mp3", "downloader", "media", "cli"]
 requirements = [
     "Python 3.10+",
     "pip in PATH"
 ]
 install_steps = [
-    "pip install -e ."
+    "pip install --no-build-isolation -e ."
 ]
 uninstall_steps = [
     "pip uninstall -y sodo"
 ]
 tips = [
-    "Requires active Python environment with click/typer",
-    "Use 'sodo --help' to inspect todo management commands"
+    "Run 'sodo --help' to see YouTube download and conversion commands",
+    "Requires ffmpeg in PATH for audio extraction"
 ]
