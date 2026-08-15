@@ -116,7 +116,7 @@ pub fn run_install_pipeline(
         if !t_list.is_empty() {
             println!("  {} Tips:", "💡".yellow());
             for t in t_list {
-                println!("    • {}", t.dimmed());
+                println!("    • {}", t.white());
             }
         }
     }

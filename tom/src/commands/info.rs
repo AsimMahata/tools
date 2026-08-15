@@ -131,7 +131,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !steps.is_empty() {
                 println!("\n{}", "Uninstallation Steps:".bold());
                 for (i, step) in steps.iter().enumerate() {
-                    println!("  {}. {}", i + 1, step.dimmed());
+                    println!("  {}. {}", i + 1, step.white());
                 }
             }
         }
@@ -140,7 +140,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !t_list.is_empty() {
                 println!("\n{}", "Tips & Instructions:".bold());
                 for t in t_list {
-                    println!("  💡 {}", t.dimmed());
+                    println!("  💡 {}", t.white());
                 }
             }
         }
@@ -150,7 +150,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
                 "\n{:<20} {} ({})",
                 "Last Modified:".bold(),
                 modified.format("%Y-%m-%d %H:%M:%S"),
-                tool.modified_relative.dimmed()
+                tool.modified_relative.cyan()
             );
         }
     } else if let Some(entry) = registry.get(tool_name) {
@@ -187,7 +187,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !steps.is_empty() {
                 println!("\n{}", "Uninstallation Steps:".bold());
                 for (i, step) in steps.iter().enumerate() {
-                    println!("  {}. {}", i + 1, step.dimmed());
+                    println!("  {}. {}", i + 1, step.white());
                 }
             }
         }
@@ -196,7 +196,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !tips.is_empty() {
                 println!("\n{}", "Tips & Instructions:".bold());
                 for t in tips {
-                    println!("  💡 {}", t.dimmed());
+                    println!("  💡 {}", t.white());
                 }
             }
         }
