@@ -48,22 +48,60 @@ sudow --version
 
 ## Installation
 
-### Using installer script
-Run the provided `install.bat`:
+> **⚠ Must be installed and uninstalled manually** — `tom install sudow` and
+> `tom uninstall sudow` do not work because the password setup step (`sudow passwd`)
+> requires an interactive terminal that `tom` does not provide.
+
+### Step 1 — Build & install the binary
+
+Open a terminal in the project directory and run:
+
 ```cmd
-install.bat -y
+install.bat
 ```
 
-### Using Cargo directly
+Or manually with Cargo:
+
 ```powershell
 cargo build --release
 Copy-Item "target\release\sudow.exe" "$HOME\.cargo\bin\sudow.exe"
 ```
 
-### Via `tom`
+### Step 2 — Set your sudo password
+
+After installation, run once to configure your password:
+
 ```powershell
-tom install sudow
+sudow passwd
 ```
+
+You will be prompted twice (no echo). The password is stored as a SHA-256 hash
+in `%APPDATA%\sudow\passwd` — never in plaintext.
+
+### Step 3 — Verify
+
+```powershell
+sudow doctor
+sudow ipconfig /flushdns
+```
+
+---
+
+## Uninstallation
+
+> **⚠ Must be uninstalled manually** — `tom uninstall sudow` does not work
+> because Windows locks the binary when it is in use.
+
+Open a terminal in the project directory and run:
+
+```cmd
+uninstall.bat
+```
+
+This removes:
+- The `sudow.exe` binary from `%USERPROFILE%\.cargo\bin\`
+- The password hash from `%APPDATA%\sudow\`
+- The `target\` build directory
 
 ---
 
@@ -99,6 +137,7 @@ Elevated   Normal
 
 `sudow` complies with Windows security standards:
 - Does **NOT** bypass or disable UAC.
-- Does **NOT** store or cache user credentials or passwords.
+- Does **NOT** store plaintext passwords — only a SHA-256 hash in `%APPDATA%\sudow\passwd`.
 - Does **NOT** modify Windows security policies or create permanent elevated background services.
+- Requires a **sudo password** on every invocation (set via `sudow passwd`), just like Linux `sudo`.
 - Prompts for standard Windows UAC confirmation when elevation is needed.
