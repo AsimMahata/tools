@@ -166,22 +166,18 @@ pub fn run_install_pipeline(
 
 pub fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStatus, String> {
     #[cfg(target_os = "windows")]
-    let mut command = Command::new("cmd");
-    #[cfg(target_os = "windows")]
-    {
-        command.args(["/C", cmd]);
-        if let Some(user_local) = dirs::data_local_dir() {
-            let temp_dir = user_local.join("Temp");
-            let _ = fs::create_dir_all(&temp_dir);
-            command.env("TEMP", &temp_dir);
-            command.env("TMP", &temp_dir);
-        }
-    }
+    let mut command = {
+        let mut c = Command::new("powershell");
+        c.args(["-NoProfile", "-Command", cmd]);
+        c
+    };
 
     #[cfg(not(target_os = "windows"))]
-    let mut command = Command::new("sh");
-    #[cfg(not(target_os = "windows"))]
-    command.args(["-c", cmd]);
+    let mut command = {
+        let mut c = Command::new("sh");
+        c.args(["-c", cmd]);
+        c
+    };
 
     command.current_dir(cwd);
     let status = command

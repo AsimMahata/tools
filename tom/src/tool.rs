@@ -96,6 +96,15 @@ impl Tool {
         // 1. Primary check: Run `<toolname> -V` via shell
         #[cfg(target_os = "windows")]
         {
+            if let Ok(output) = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-Command", &format!("{} -V", cmd_name)])
+                .output()
+            {
+                if output.status.success() {
+                    return true;
+                }
+            }
+
             if let Ok(output) = std::process::Command::new("cmd")
                 .args(["/C", &format!("{} -V", cmd_name)])
                 .output()
@@ -130,7 +139,14 @@ impl Tool {
             }
         }
 
-        // 3. Check cargo bin or local build target
+        // 3. Check Python editable link or package
+        if self.path.join(format!("{}.egg-info", self.name)).exists()
+            || self.path.join(format!("{}.dist-info", self.name)).exists()
+        {
+            return true;
+        }
+
+        // 4. Check cargo bin or local build target
         let exe_name = if cfg!(target_os = "windows") {
             format!("{}.exe", self.name)
         } else {

@@ -55,8 +55,8 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
                     cmd_str.dimmed()
                 );
                 #[cfg(target_os = "windows")]
-                let status = Command::new("cmd")
-                    .args(["/C", cmd_str])
+                let status = Command::new("powershell")
+                    .args(["-NoProfile", "-Command", cmd_str])
                     .current_dir(&tool.path)
                     .status();
 
