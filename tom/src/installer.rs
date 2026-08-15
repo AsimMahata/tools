@@ -7,39 +7,109 @@ use std::time::Duration;
 
 use crate::git::GitStatus;
 
-/// Clone repository into target directory, gracefully handling stub directories with README.md
+/// Clone / populate repository into target directory reliably, even if directory or stub README exists
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
-    if target_path.exists() {
-        let entries: Vec<_> = fs::read_dir(target_path)
-            .map(|rd| rd.flatten().collect())
-            .unwrap_or_default();
+    let _ = fs::create_dir_all(target_path);
+    let target_str = target_path.to_str().unwrap_or(".");
 
-        let is_only_readme = entries.iter().all(|e| {
-            let name = e.file_name();
-            let name_str = name.to_string_lossy();
-            name_str.eq_ignore_ascii_case("readme.md")
-        });
+    // Check if target directory already has a git repo
+    if target_path.join(".git").exists() {
+        return Err(format!(
+            "Directory already contains a Git repository: {}",
+            target_path.display()
+        ));
+    }
 
-        if is_only_readme {
-            // Remove stub README so git clone can populate the directory
-            let _ = remove_dir_all_force(target_path);
-        } else if !entries.is_empty() {
-            return Err(format!("Directory already exists and is not empty: {}", target_path.display()));
+    // 1. Initialize git in target directory
+    let init_out = Command::new("git")
+        .args(["-C", target_str, "init"])
+        .output()
+        .map_err(|e| format!("Failed to run git init: {}", e))?;
+
+    if !init_out.status.success() {
+        let stderr = String::from_utf8_lossy(&init_out.stderr);
+        return Err(format!("git init failed: {}", stderr));
+    }
+
+    // 2. Add remote origin
+    let _ = Command::new("git")
+        .args(["-C", target_str, "remote", "remove", "origin"])
+        .output();
+
+    let remote_out = Command::new("git")
+        .args(["-C", target_str, "remote", "add", "origin", repo_url])
+        .output()
+        .map_err(|e| format!("Failed to set git remote: {}", e))?;
+
+    if !remote_out.status.success() {
+        let stderr = String::from_utf8_lossy(&remote_out.stderr);
+        return Err(format!("git remote add failed: {}", stderr));
+    }
+
+    // 3. Fetch all objects from origin
+    let fetch_out = Command::new("git")
+        .args(["-C", target_str, "fetch", "origin"])
+        .output()
+        .map_err(|e| format!("Failed to run git fetch: {}", e))?;
+
+    if !fetch_out.status.success() {
+        let stderr = String::from_utf8_lossy(&fetch_out.stderr);
+        return Err(format!("git fetch failed:\n{}", stderr));
+    }
+
+    // 4. Detect default remote branch (main or master)
+    let branch_out = Command::new("git")
+        .args(["-C", target_str, "remote", "show", "origin"])
+        .output();
+
+    let mut branch = "main".to_string();
+    if let Ok(b_out) = branch_out {
+        let text = String::from_utf8_lossy(&b_out.stdout);
+        for line in text.lines() {
+            if line.contains("HEAD branch:") {
+                if let Some(b) = line.split(':').nth(1) {
+                    let trimmed = b.trim();
+                    if !trimmed.is_empty() {
+                        branch = trimmed.to_string();
+                    }
+                }
+            }
         }
     }
 
-    let target_str = target_path.to_str().unwrap_or(".");
-    let output = Command::new("git")
-        .args(["clone", repo_url, target_str])
+    // 5. Checkout the branch cleanly and force overwrite any stub files
+    let checkout_out = Command::new("git")
+        .args([
+            "-C",
+            target_str,
+            "checkout",
+            "-f",
+            "-B",
+            &branch,
+            &format!("origin/{}", branch),
+        ])
         .output()
-        .map_err(|e| format!("Failed to run git clone: {}", e))?;
+        .map_err(|e| format!("Failed to checkout branch: {}", e))?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(format!("Git clone failed:\n{}", stderr))
+    if !checkout_out.status.success() {
+        // Fallback checkout attempt
+        let _ = Command::new("git")
+            .args(["-C", target_str, "checkout", "-f", &branch])
+            .output();
     }
+
+    let _ = Command::new("git")
+        .args([
+            "-C",
+            target_str,
+            "branch",
+            "-u",
+            &format!("origin/{}", branch),
+            &branch,
+        ])
+        .output();
+
+    Ok(())
 }
 
 /// Auto-detect build system or run custom install command
