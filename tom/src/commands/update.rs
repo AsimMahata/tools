@@ -57,7 +57,7 @@ fn update_single_tool(tool: &Tool) {
             // Rebuild if needed
             if msg.contains("Updating") || msg.contains("Fast-forward") {
                 println!("  {} Rebuilding {}...", "→".cyan(), tool.name);
-                match build_tool(&tool.path, None) {
+                match build_tool(&tool.path, None, None, None) {
                     Ok(Some(b_msg)) => println!("  {} {}", "✓".green(), b_msg),
                     Ok(None) => {}
                     Err(err) => eprintln!("  {} Build error: {}", "⚠".yellow(), err),

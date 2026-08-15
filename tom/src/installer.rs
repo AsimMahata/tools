@@ -2,13 +2,30 @@ use colored::*;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use std::thread::sleep;
+use std::time::Duration;
 
 use crate::git::GitStatus;
 
-/// Clone repository into target directory
+/// Clone repository into target directory, gracefully handling stub directories with README.md
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
     if target_path.exists() {
-        return Err(format!("Directory already exists: {}", target_path.display()));
+        let entries: Vec<_> = fs::read_dir(target_path)
+            .map(|rd| rd.flatten().collect())
+            .unwrap_or_default();
+
+        let is_only_readme = entries.iter().all(|e| {
+            let name = e.file_name();
+            let name_str = name.to_string_lossy();
+            name_str.eq_ignore_ascii_case("readme.md")
+        });
+
+        if is_only_readme {
+            // Remove stub README so git clone can populate the directory
+            let _ = remove_dir_all_force(target_path);
+        } else if !entries.is_empty() {
+            return Err(format!("Directory already exists and is not empty: {}", target_path.display()));
+        }
     }
 
     let target_str = target_path.to_str().unwrap_or(".");
@@ -25,11 +42,23 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
     }
 }
 
-/// Auto-detect build system and build/install the tool
-pub fn build_tool(tool_path: &Path, custom_cmd: Option<&str>) -> Result<Option<String>, String> {
-    // 1. Custom build command
+/// Auto-detect build system or run custom install command
+pub fn build_tool(
+    tool_path: &Path,
+    custom_cmd: Option<&str>,
+    requirements: Option<&str>,
+    tips: Option<&str>,
+) -> Result<Option<String>, String> {
+    if let Some(req) = requirements {
+        println!("  {} Requirements: {}", "ℹ".blue(), req.cyan());
+    }
+    if let Some(tip) = tips {
+        println!("  {} Tip: {}", "💡".yellow(), tip.dimmed());
+    }
+
+    // 1. Custom install command
     if let Some(cmd) = custom_cmd {
-        println!("  {} Running custom build: {}", "→".cyan(), cmd);
+        println!("  {} Running install command: {}", "→".cyan(), cmd.bold());
         #[cfg(target_os = "windows")]
         let status = Command::new("cmd")
             .args(["/C", cmd])
@@ -43,15 +72,15 @@ pub fn build_tool(tool_path: &Path, custom_cmd: Option<&str>) -> Result<Option<S
             .status();
 
         return match status {
-            Ok(s) if s.success() => Ok(Some("Custom build succeeded.".to_string())),
-            Ok(_) => Err("Custom build command failed.".to_string()),
-            Err(e) => Err(format!("Failed to execute build command: {}", e)),
+            Ok(s) if s.success() => Ok(Some("Install command completed successfully.".to_string())),
+            Ok(_) => Err("Install command failed.".to_string()),
+            Err(e) => Err(format!("Failed to execute install command: {}", e)),
         };
     }
 
     // 2. Rust / Cargo project
     if tool_path.join("Cargo.toml").is_file() {
-        println!("  {} Detected Rust project. Compiling...", "→".cyan());
+        println!("  {} Detected Rust project. Compiling with cargo...", "→".cyan());
         let output = Command::new("cargo")
             .args(["build"])
             .current_dir(tool_path)
@@ -67,7 +96,13 @@ pub fn build_tool(tool_path: &Path, custom_cmd: Option<&str>) -> Result<Option<S
         };
     }
 
-    // 3. Node.js project
+    // 3. Python project
+    if tool_path.join("pyproject.toml").is_file() || tool_path.join("requirements.txt").is_file() {
+        println!("  {} Detected Python project.", "→".cyan());
+        return Ok(Some("Python project ready.".to_string()));
+    }
+
+    // 4. Node.js project
     if tool_path.join("package.json").is_file() {
         println!("  {} Detected Node.js project. Installing dependencies...", "→".cyan());
         let output = Command::new("npm")
@@ -85,17 +120,16 @@ pub fn build_tool(tool_path: &Path, custom_cmd: Option<&str>) -> Result<Option<S
         };
     }
 
-    // 4. Python project
-    if tool_path.join("pyproject.toml").is_file() || tool_path.join("requirements.txt").is_file() {
-        println!("  {} Detected Python project.", "→".cyan());
-        return Ok(Some("Python project detected.".to_string()));
-    }
-
     Ok(None)
 }
 
-/// Safely uninstall / remove a tool directory
-pub fn uninstall_tool(tool_path: &Path, tool_name: &str, force: bool) -> Result<(), String> {
+/// Safely uninstall tool code/git repository while preserving its README.md index file
+pub fn uninstall_tool(
+    tool_path: &Path,
+    tool_name: &str,
+    force: bool,
+    uninstall_cmd: Option<&str>,
+) -> Result<(), String> {
     if !tool_path.exists() {
         return Err(format!("Tool '{}' does not exist at {}", tool_name, tool_path.display()));
     }
@@ -116,6 +150,88 @@ pub fn uninstall_tool(tool_path: &Path, tool_name: &str, force: bool) -> Result<
         }
     }
 
-    fs::remove_dir_all(tool_path)
-        .map_err(|e| format!("Failed to remove directory {}: {}", tool_path.display(), e))
+    // 1. Run custom uninstall command if specified
+    if let Some(cmd) = uninstall_cmd {
+        println!("  {} Running uninstall command: {}", "→".cyan(), cmd.dimmed());
+        #[cfg(target_os = "windows")]
+        let _ = Command::new("cmd")
+            .args(["/C", cmd])
+            .current_dir(tool_path)
+            .status();
+
+        #[cfg(not(target_os = "windows"))]
+        let _ = Command::new("sh")
+            .args(["-c", cmd])
+            .current_dir(tool_path)
+            .status();
+
+        sleep(Duration::from_millis(300));
+    }
+
+    // 2. Read and preserve README.md content before removing code
+    let readme_path = tool_path.join("README.md");
+    let readme_content = fs::read_to_string(&readme_path).ok();
+
+    // 3. Remove all files and directories in tool_path
+    remove_dir_all_force(tool_path)
+        .map_err(|e| format!("Failed to remove directory {}: {}", tool_path.display(), e))?;
+
+    // 4. Recreate directory with ONLY README.md preserved for parent index repository
+    if let Some(content) = readme_content {
+        let _ = fs::create_dir_all(tool_path);
+        let _ = fs::write(&readme_path, content);
+        println!("  {} Preserved {} for parent repository index", "✓".green(), "README.md".bold());
+    }
+
+    Ok(())
+}
+
+/// Recursively delete directory tree, explicitly clearing read-only flags on Windows with retry
+fn remove_dir_all_force(path: &Path) -> std::io::Result<()> {
+    let mut last_err = None;
+    for i in 0..5 {
+        if i > 0 {
+            sleep(Duration::from_millis(300 * i));
+        }
+        match try_remove_dir_all_force(path) {
+            Ok(_) => return Ok(()),
+            Err(e) => {
+                last_err = Some(e);
+            }
+        }
+    }
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "Failed to remove directory")
+    }))
+}
+
+fn try_remove_dir_all_force(path: &Path) -> std::io::Result<()> {
+    if path.is_dir() {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let entry_path = entry.path();
+            if entry_path.is_dir() {
+                try_remove_dir_all_force(&entry_path)?;
+            } else {
+                clear_readonly(&entry_path);
+                let _ = fs::remove_file(&entry_path);
+            }
+        }
+        clear_readonly(path);
+        fs::remove_dir(path)?;
+    } else if path.exists() {
+        clear_readonly(path);
+        fs::remove_file(path)?;
+    }
+    Ok(())
+}
+
+fn clear_readonly(path: &Path) {
+    if let Ok(metadata) = fs::symlink_metadata(path) {
+        let mut perms = metadata.permissions();
+        if perms.readonly() {
+            perms.set_readonly(false);
+            let _ = fs::set_permissions(path, perms);
+        }
+    }
 }

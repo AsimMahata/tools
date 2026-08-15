@@ -35,17 +35,29 @@ impl Tool {
             return None;
         }
 
+        let is_self = dir_name.eq_ignore_ascii_case("tom");
+
+        // Inspect Git status
+        let git = GitStatus::inspect(&path);
+
+        // Check if directory is just an uninstalled stub with only README.md
+        let has_code = path.join("Cargo.toml").exists()
+            || path.join("pyproject.toml").exists()
+            || path.join("package.json").exists()
+            || path.join("src").exists()
+            || is_self
+            || git.is_repo;
+
+        if !has_code {
+            return None;
+        }
+
         // Load optional tom.toml metadata
         let metadata = ToolMetadata::load_from_dir(&path);
         let name = metadata
             .as_ref()
             .and_then(|m| m.name.clone())
             .unwrap_or_else(|| dir_name.clone());
-
-        let is_self = dir_name.eq_ignore_ascii_case("tom");
-
-        // Inspect Git status
-        let git = GitStatus::inspect(&path);
 
         // Get directory last modified time
         let (modified_time, modified_relative) = get_modified_info(&path);
@@ -98,7 +110,6 @@ pub fn discover_tools(tools_dir: &Path) -> Vec<Tool> {
     }
 
     tools.sort_by(|a, b| {
-        // Keep TOM or sort alphabetically
         a.name.to_lowercase().cmp(&b.name.to_lowercase())
     });
     tools

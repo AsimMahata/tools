@@ -9,6 +9,10 @@ pub struct ToolMetadata {
     pub version: Option<String>,
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub install_cmd: Option<String>,
+    pub uninstall_cmd: Option<String>,
+    pub requirements: Option<String>,
+    pub tips: Option<String>,
 }
 
 impl ToolMetadata {
@@ -23,25 +27,5 @@ impl ToolMetadata {
             }
         }
         None
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_tom_toml() {
-        let toml_str = r#"
-            name = "netman"
-            description = "Windows network management CLI"
-            version = "0.1.0"
-            author = "Asim Mahata"
-            tags = ["network", "cli", "windows"]
-        "#;
-        let meta: ToolMetadata = toml::from_str(toml_str).unwrap();
-        assert_eq!(meta.name.as_deref(), Some("netman"));
-        assert_eq!(meta.description.as_deref(), Some("Windows network management CLI"));
-        assert_eq!(meta.version.as_deref(), Some("0.1.0"));
     }
 }

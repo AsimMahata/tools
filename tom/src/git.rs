@@ -23,16 +23,22 @@ pub struct GitStatus {
 impl GitStatus {
     /// Inspect the given directory to query Git status
     pub fn inspect(path: &Path) -> Self {
-        // Quick check: does .git exist in directory or is it a git repo?
-        let git_dir = path.join(".git");
-        if !git_dir.exists() {
-            // Verify with git rev-parse in case of worktree
-            let output = Command::new("git")
-                .args(["-C", path.to_str().unwrap_or("."), "rev-parse", "--is-inside-work-tree"])
-                .output();
+        let is_self = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .eq_ignore_ascii_case("tom");
 
-            if let Ok(out) = output {
-                if !out.status.success() {
+        let mut check_path = path.to_path_buf();
+        if !path.join(".git").exists() {
+            if is_self {
+                if let Some(parent) = path.parent() {
+                    if parent.join(".git").exists() {
+                        check_path = parent.to_path_buf();
+                    } else {
+                        return GitStatus::default();
+                    }
+                } else {
                     return GitStatus::default();
                 }
             } else {
@@ -46,7 +52,7 @@ impl GitStatus {
             ..Default::default()
         };
 
-        let path_str = path.to_str().unwrap_or(".");
+        let path_str = check_path.to_str().unwrap_or(".");
 
         // 1. Current branch
         if let Ok(out) = Command::new("git")
@@ -58,7 +64,6 @@ impl GitStatus {
                 if !branch_str.is_empty() {
                     status.branch = Some(branch_str);
                 } else {
-                    // Detached HEAD?
                     if let Ok(head_out) = Command::new("git")
                         .args(["-C", path_str, "rev-parse", "--short", "HEAD"])
                         .output()

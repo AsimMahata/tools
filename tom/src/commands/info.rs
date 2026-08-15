@@ -84,6 +84,25 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             println!("{:<20} {}", "Git:".bold(), "Not a Git repository".dimmed());
         }
 
+        let reg_entry = registry.get(&tool.name);
+        let req = tool.metadata.as_ref().and_then(|m| m.requirements.as_deref()).or_else(|| reg_entry.and_then(|r| r.requirements.as_deref()));
+        let tip = tool.metadata.as_ref().and_then(|m| m.tips.as_deref()).or_else(|| reg_entry.and_then(|r| r.tips.as_deref()));
+        let inst_cmd = tool.metadata.as_ref().and_then(|m| m.install_cmd.as_deref()).or_else(|| reg_entry.and_then(|r| r.install_cmd.as_deref()));
+        let uninst_cmd = tool.metadata.as_ref().and_then(|m| m.uninstall_cmd.as_deref()).or_else(|| reg_entry.and_then(|r| r.uninstall_cmd.as_deref()));
+
+        if let Some(r) = req {
+            println!("{:<20} {}", "Requirements:".bold(), r.cyan());
+        }
+        if let Some(t) = tip {
+            println!("{:<20} {}", "Tips:".bold(), t.dimmed());
+        }
+        if let Some(ic) = inst_cmd {
+            println!("{:<20} {}", "Install Cmd:".bold(), ic.dimmed());
+        }
+        if let Some(uc) = uninst_cmd {
+            println!("{:<20} {}", "Uninstall Cmd:".bold(), uc.dimmed());
+        }
+
         if let Some(modified) = tool.modified_time {
             println!(
                 "{:<20} {} ({})",
@@ -102,6 +121,15 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         println!("{:<20} {}", "Repository URL:".bold(), entry.repository.underline());
         if let Some(ref tags) = entry.tags {
             println!("{:<20} {}", "Tags:".bold(), tags.join(", "));
+        }
+        if let Some(ref req) = entry.requirements {
+            println!("{:<20} {}", "Requirements:".bold(), req.cyan());
+        }
+        if let Some(ref tip) = entry.tips {
+            println!("{:<20} {}", "Tips:".bold(), tip.dimmed());
+        }
+        if let Some(ref ic) = entry.install_cmd {
+            println!("{:<20} {}", "Install Cmd:".bold(), ic.dimmed());
         }
         println!("\nRun 'tom install {}' to clone and install this tool.", entry.name);
     } else {
