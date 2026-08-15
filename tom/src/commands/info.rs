@@ -138,9 +138,9 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
 
         if let Some(t_list) = tips {
             if !t_list.is_empty() {
-                println!("\n{}", "Tips & Instructions:".bold());
+                println!("\n{}", "Tips & Instructions:".bold().yellow());
                 for t in t_list {
-                    println!("  💡 {}", t.white());
+                    println!("  💡 {}", t.yellow());
                 }
             }
         }
@@ -187,16 +187,16 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             if !steps.is_empty() {
                 println!("\n{}", "Uninstallation Steps:".bold());
                 for (i, step) in steps.iter().enumerate() {
-                    println!("  {}. {}", i + 1, step.white());
+                    println!("  {}. {}", i + 1, step.cyan());
                 }
             }
         }
 
         if let Some(ref tips) = entry.tips {
             if !tips.is_empty() {
-                println!("\n{}", "Tips & Instructions:".bold());
+                println!("\n{}", "Tips & Instructions:".bold().yellow());
                 for t in tips {
-                    println!("  💡 {}", t.white());
+                    println!("  💡 {}", t.yellow());
                 }
             }
         }

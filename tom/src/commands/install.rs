@@ -70,7 +70,7 @@ fn install_single(tool_name: &str, auto_yes: bool, registry: &Registry, tools_di
         if !t_list.is_empty() {
             println!("  {} Tips:", "💡".yellow());
             for t in t_list {
-                println!("    • {}", t.white());
+                println!("    {} {}", "•".yellow(), t.yellow());
             }
         }
     }
