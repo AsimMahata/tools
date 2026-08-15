@@ -195,26 +195,59 @@ pub fn remove_tool_contents_except_readme(tool_path: &Path) -> std::io::Result<(
         return Ok(());
     }
 
-    for entry in fs::read_dir(tool_path)? {
-        let entry = entry?;
-        let path = entry.path();
-        let file_name = entry.file_name();
-        let name_str = file_name.to_string_lossy();
+    let mut last_err = None;
 
-        // STRICTLY preserve README.md untouched
-        if name_str.eq_ignore_ascii_case("readme.md") {
-            continue;
+    // Retry loop to handle brief Windows file locks from editors/language servers
+    for i in 0..5 {
+        if i > 0 {
+            sleep(Duration::from_millis(250 * i));
         }
 
-        if path.is_dir() {
-            remove_dir_all_force(&path)?;
-        } else {
+        let mut failed = false;
+
+        let entries = match fs::read_dir(tool_path) {
+            Ok(e) => e,
+            Err(e) => {
+                last_err = Some(e);
+                continue;
+            }
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let file_name = entry.file_name();
+            let name_str = file_name.to_string_lossy();
+
+            // STRICTLY preserve README.md untouched
+            if name_str.eq_ignore_ascii_case("readme.md") {
+                continue;
+            }
+
             clear_readonly(&path);
-            let _ = fs::remove_file(&path);
+
+            if path.is_dir() {
+                if let Err(e) = remove_dir_all_force(&path) {
+                    last_err = Some(e);
+                    failed = true;
+                }
+            } else {
+                if let Err(e) = fs::remove_file(&path) {
+                    last_err = Some(e);
+                    failed = true;
+                }
+            }
+        }
+
+        if !failed {
+            return Ok(());
         }
     }
 
-    Ok(())
+    if let Some(e) = last_err {
+        Err(e)
+    } else {
+        Ok(())
+    }
 }
 
 /// Recursively delete directory tree, explicitly clearing read-only flags on Windows with retry
@@ -222,7 +255,7 @@ pub fn remove_dir_all_force(path: &Path) -> std::io::Result<()> {
     let mut last_err = None;
     for i in 0..5 {
         if i > 0 {
-            sleep(Duration::from_millis(300 * i));
+            sleep(Duration::from_millis(250 * i));
         }
         match try_remove_dir_all_force(path) {
             Ok(_) => return Ok(()),
@@ -237,10 +270,12 @@ pub fn remove_dir_all_force(path: &Path) -> std::io::Result<()> {
 }
 
 fn try_remove_dir_all_force(path: &Path) -> std::io::Result<()> {
+    clear_readonly(path);
     if path.is_dir() {
         for entry in fs::read_dir(path)? {
             let entry = entry?;
             let entry_path = entry.path();
+            clear_readonly(&entry_path);
             if entry_path.is_dir() {
                 try_remove_dir_all_force(&entry_path)?;
             } else {
