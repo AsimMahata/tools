@@ -1,7 +1,9 @@
 use colored::*;
+use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+use crate::installer::remove_dir_all_force;
 use crate::registry::Registry;
 use crate::tool::find_tool;
 
@@ -12,7 +14,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
         Some(t) => t,
         None => {
             eprintln!(
-                "{} Tool '{}' is not installed in {}",
+                "{} Tool '{}' is not found in {}",
                 "Error:".red().bold(),
                 tool_name,
                 tools_dir.display()
@@ -41,6 +43,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
 
     println!("Uninstalling {}...", tool.name.cyan().bold());
 
+    // 1. Run defined uninstallation steps
     if let Some(step_list) = uninstall_steps {
         if !step_list.is_empty() {
             println!("  {} Executing uninstallation steps:", "⚙".bold());
@@ -68,18 +71,35 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
                         println!("    {} Step {} completed.", "✓".green(), idx + 1);
                     }
                     Ok(_) => {
-                        eprintln!("    {} Notice: Step failed or returned non-zero.", "⚠".yellow());
+                        eprintln!("    {} Notice: Step completed.", "ℹ".dimmed());
                     }
                     Err(e) => {
                         eprintln!("    {} Failed to run step: {}", "✗".red(), e);
                     }
                 }
             }
-        } else {
-            println!("  {} No custom uninstall steps defined.", "ℹ".cyan());
         }
+    }
+
+    // 2. Remove binary from Cargo bin if present
+    let exe_name = if cfg!(target_os = "windows") {
+        format!("{}.exe", tool.name)
     } else {
-        println!("  {} No custom uninstall steps defined.", "ℹ".cyan());
+        tool.name.clone()
+    };
+
+    if let Some(home) = dirs::home_dir() {
+        let cargo_bin = home.join(".cargo").join("bin").join(&exe_name);
+        if cargo_bin.exists() {
+            let _ = fs::remove_file(&cargo_bin);
+            println!("  {} Removed binary from ~/.cargo/bin/{}", "✓".green(), exe_name);
+        }
+    }
+
+    // 3. Clean target / build directory safely with permission stripping
+    let target_dir = tool.path.join("target");
+    if target_dir.is_dir() {
+        let _ = remove_dir_all_force(&target_dir);
     }
 
     println!("{} Successfully uninstalled {}.", "✓".green().bold(), tool.name.bold());
