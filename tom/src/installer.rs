@@ -16,25 +16,13 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
     let readme_path = target_path.join("README.md");
     let readme_content = fs::read_to_string(&readme_path).ok();
 
-    // 1. If target directory exists as an uninstalled stub (no source code/.git), clear it for git clone
+    // 1. Remove old directory first so git clone gets a fresh target
     if target_path.exists() {
-        let has_code = target_path.join("Cargo.toml").exists()
-            || target_path.join("pyproject.toml").exists()
-            || target_path.join("package.json").exists()
-            || target_path.join("src").exists();
-
-        let has_git = target_path.join(".git").exists();
-
-        if !has_code && !has_git {
-            let _ = remove_tool_contents_except_readme(target_path);
-            clear_readonly(&readme_path);
-            let _ = fs::remove_file(&readme_path);
-            clear_readonly(target_path);
-            let _ = fs::remove_dir(target_path);
-        } else {
+        if let Err(e) = remove_dir_all_force(target_path) {
             return Err(format!(
-                "Directory already contains code or a Git repository: {}",
-                target_path.display()
+                "Failed to remove old directory {}: {}",
+                target_path.display(),
+                e
             ));
         }
     }
@@ -48,7 +36,7 @@ pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        // Restore stub README if clone failed
+        // Restore stub directory with README.md if clone failed
         if let Some(content) = readme_content {
             let _ = fs::create_dir_all(target_path);
             let _ = fs::write(&readme_path, content);
