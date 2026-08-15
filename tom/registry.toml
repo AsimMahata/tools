@@ -1,0 +1,32 @@
+# TOM Tool Registry
+# Maps known tool names to their Git repositories and metadata
+
+[tools.tom]
+name = "tom"
+description = "Tool Manager — CLI to manage personal tools and repositories"
+repository = "https://github.com/AsimMahata/tom.git"
+tags = ["tools", "cli", "git", "manager"]
+
+[tools.netman]
+name = "netman"
+description = "Windows network management CLI"
+repository = "https://github.com/AsimMahata/netman.git"
+tags = ["network", "cli", "windows"]
+
+[tools.progit]
+name = "progit"
+description = "Git productivity enhancements and workflow helper"
+repository = "https://github.com/AsimMahata/progit.git"
+tags = ["git", "workflow", "productivity"]
+
+[tools.logit]
+name = "logit"
+description = "Log inspection and management utility"
+repository = "https://github.com/AsimMahata/logit.git"
+tags = ["logging", "cli", "tools"]
+
+[tools.sodo]
+name = "sodo"
+description = "Task management and todo tracker CLI"
+repository = "https://github.com/AsimMahata/sodo.git"
+tags = ["todo", "productivity", "cli"]

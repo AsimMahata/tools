@@ -1,16 +1,21 @@
-# Parent index repository .gitignore
-# Tracks tom/, root index files, and sibling README.md files
-# Ignores sibling source code, build artifacts, and internal .git directories
+# Ignore sibling tools' code and internals, keeping only their README.md files
+/netman/*
+!/netman/README.md
+!/netman/readme.md
 
-/*
-!/tom/
-!/.gitignore
-!/README.md
-!/config.toml
-!/registry.toml
+/logit/*
+!/logit/README.md
+!/logit/readme.md
 
-# Allow README files in sibling tool directories
-!/*/
-/*/
-!/*/README.md
-!/*/readme.md
+/progit/*
+!/progit/README.md
+!/progit/readme.md
+
+/sodo/*
+!/sodo/README.md
+!/sodo/readme.md
+
+# Ignore build artifacts
+target/
+tom/target/
+**/target/

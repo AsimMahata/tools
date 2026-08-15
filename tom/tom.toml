@@ -1,0 +1,5 @@
+name = "tom"
+description = "Tool Manager — CLI to manage personal tools and repositories"
+version = "0.1.0"
+author = "Asim Mahata"
+tags = ["tools", "cli", "git", "manager"]
