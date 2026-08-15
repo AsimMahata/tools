@@ -15,6 +15,10 @@
 !/sodo/README.md
 !/sodo/readme.md
 
+/sudow/*
+!/sudow/README.md
+!/sudow/readme.md
+
 # Ignore build artifacts
 target/
 tom/target/

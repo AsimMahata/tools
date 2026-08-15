@@ -29,6 +29,7 @@ Or double-click `install.bat` in File Explorer.
 | **[`progit`](./progit/)** | Git productivity enhancements and workflow helper | [AsimMahata/progit](https://github.com/AsimMahata/progit) | Active Tool |
 | **[`logit`](./logit/)** | Log inspection and management utility | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool |
 | **[`sodo`](./sodo/)** | Fast task management and todo tracker CLI | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool |
+| **[`sudow`](./sudow/)** | Windows sudo-style command wrapper for seamless elevation | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool |
 
 ---
 
@@ -43,7 +44,8 @@ tools/                     ← Dedicated parent tools repository
 ├── netman/                ← Sibling tool (independent Git repo / README stub)
 ├── progit/                ← Sibling tool (independent Git repo / README stub)
 ├── logit/                 ← Sibling tool (independent Git repo / README stub)
-└── sodo/                  ← Sibling tool (independent Git repo / README stub)
+├── sodo/                  ← Sibling tool (independent Git repo / README stub)
+└── sudow/                 ← Sibling tool (independent Git repo / README stub)
 ```
 
 ---

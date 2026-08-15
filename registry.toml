@@ -94,3 +94,24 @@ tips = [
     "Run 'sodo --help' to see YouTube download and conversion commands",
     "Requires ffmpeg in PATH for audio extraction"
 ]
+
+[tools.sudow]
+name = "sudow"
+description = "Windows Sudo-Style Command Wrapper for seamless elevation"
+repository = "https://github.com/AsimMahata/sudow.git"
+tags = ["elevation", "sudo", "windows", "uac", "cli", "tools"]
+requirements = [
+    "Rust toolchain (cargo in PATH)"
+]
+install_steps = [
+    "cargo build --release"
+]
+uninstall_steps = [
+    "cargo clean"
+]
+tips = [
+    "The compiled binary is placed in target/release/sudow.exe",
+    "Run 'sudow doctor' to verify system elevation and environment health",
+    "Run 'sudow --help' to view command options and usage examples"
+]
+
