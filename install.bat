@@ -1,86 +1,55 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
+cd /d "%~dp0"
 
-echo =======================================================
-echo          TOM - Tool Manager Windows Installer
-echo =======================================================
+echo ======================================================================
+echo   TOOLS SUITE - TOM (Tool Manager) Windows Installer
+echo ======================================================================
+echo.
+echo [*] Requirements:
+echo     - Rust and Cargo toolchain in PATH (https://rustup.rs/)
+echo.
+echo [!] Tips:
+echo     - Compiles TOM and copies tom.exe to %%USERPROFILE%%\.cargo\bin\
+echo     - After installation, 'tom' command is available anywhere in your terminal
 echo.
 
-:: 1. Check for Cargo / Rust toolchain
-where cargo >nul 2>nul
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Rust and Cargo were not found in your PATH.
-    echo Please install Rust from https://rustup.rs/ and try again.
-    echo.
-    exit /b 1
-)
-
-echo [*] Rust toolchain detected.
-
-:: 2. Determine directories
-set "SCRIPT_DIR=%~dp0"
-set "TOM_DIR=%SCRIPT_DIR%tom"
-set "TARGET_DIR=%USERPROFILE%\.cargo\bin"
-
-if not exist "%TOM_DIR%\Cargo.toml" (
-    echo [ERROR] Could not find TOM source code at "%TOM_DIR%".
-    echo Please ensure install.bat is located in the root of the tools repository.
-    echo.
-    exit /b 1
-)
-
-:: 3. Build TOM
-echo [*] Compiling TOM...
-cd /d "%TOM_DIR%"
-cargo build --release >nul 2>nul
-if exist "%TOM_DIR%\target\release\tom.exe" (
-    set "BUILT_BIN=%TOM_DIR%\target\release\tom.exe"
-) else (
-    cargo build >nul 2>nul
-    if exist "%TOM_DIR%\target\debug\tom.exe" (
-        set "BUILT_BIN=%TOM_DIR%\target\debug\tom.exe"
-    ) else (
-        echo [ERROR] Compilation failed.
-        cd /d "%SCRIPT_DIR%"
-        exit /b 1
+if "%1" neq "-y" if "%1" neq "--yes" (
+    set /p "CONFIRM=Proceed with installation of TOM? [Y/n]: "
+    if /i "!CONFIRM!"=="n" (
+        echo [!] Installation cancelled.
+        exit /b 0
     )
 )
 
-:: 4. Ensure destination folder exists
-if not exist "%TARGET_DIR%" (
-    mkdir "%TARGET_DIR%" 2>nul
-)
-
-:: 5. Copy executable to cargo bin
-echo [*] Installing tom.exe to %TARGET_DIR%\tom.exe...
-copy /Y "%BUILT_BIN%" "%TARGET_DIR%\tom.exe" >nul
-if %ERRORLEVEL% neq 0 (
-    echo [*] Direct copy locked, attempting force copy...
-    powershell -NoProfile -Command "Copy-Item -Path '%BUILT_BIN%' -Destination '%TARGET_DIR%\tom.exe' -Force" >nul 2>nul
-)
-
-cd /d "%SCRIPT_DIR%"
-
-:: 6. Verify Installation
 echo.
-echo =======================================================
-echo [*] Verifying installation...
-"%TARGET_DIR%\tom.exe" --version
-if %ERRORLEVEL% equ 0 (
-    echo.
-    echo [SUCCESS] TOM has been installed successfully!
-    echo.
-    echo Useful commands to get started:
-    echo   tom list          - View all managed tools and status
-    echo   tom status        - View Git status of all tools
-    echo   tom fetch all     - Fetch all repositories from registry
-    echo   tom install [tool]- Build and install a specific tool
-    echo   tom --help        - Show all available commands
-    echo =======================================================
-) else (
-    echo.
-    echo [WARNING] Verification command exited with an error.
-    echo Make sure %TARGET_DIR% is in your system PATH.
+echo [1/3] Verifying Cargo environment...
+where cargo >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] 'cargo' is not recognized. Please install Rust from https://rustup.rs
+    exit /b 1
+)
+echo       Rust toolchain detected.
+
+echo.
+echo [2/3] Compiling TOM in release mode...
+cargo build --manifest-path tom/Cargo.toml --release
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Failed to compile TOM.
+    exit /b 1
 )
 
+echo.
+echo [3/3] Installing tom.exe to %%USERPROFILE%%\.cargo\bin...
+if not exist "%USERPROFILE%\.cargo\bin" mkdir "%USERPROFILE%\.cargo\bin" 2>nul
+copy /Y "tom\target\release\tom.exe" "%USERPROFILE%\.cargo\bin\tom.exe" >nul
+if %ERRORLEVEL% neq 0 (
+    powershell -NoProfile -Command "Copy-Item -Path 'tom\target\release\tom.exe' -Destination '%USERPROFILE%\.cargo\bin\tom.exe' -Force" >nul 2>nul
+)
+
+echo.
+echo ======================================================================
+echo   [+] TOM is successfully installed and ready!
+echo   Run 'tom status' or 'tom --help' to get started.
+echo ======================================================================
 echo.
