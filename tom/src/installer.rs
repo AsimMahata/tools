@@ -5,7 +5,6 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-
 /// Clone / populate repository into target directory reliably
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
     let _ = fs::create_dir_all(target_path);
@@ -188,6 +187,34 @@ pub fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::Exit
         .map_err(|e| format!("Failed to execute command '{}': {}", cmd, e))?;
 
     Ok(status)
+}
+
+/// Recursively delete all files and directories in a tool directory EXCEPT README.md
+pub fn remove_tool_contents_except_readme(tool_path: &Path) -> std::io::Result<()> {
+    if !tool_path.is_dir() {
+        return Ok(());
+    }
+
+    for entry in fs::read_dir(tool_path)? {
+        let entry = entry?;
+        let path = entry.path();
+        let file_name = entry.file_name();
+        let name_str = file_name.to_string_lossy();
+
+        // STRICTLY preserve README.md untouched
+        if name_str.eq_ignore_ascii_case("readme.md") {
+            continue;
+        }
+
+        if path.is_dir() {
+            remove_dir_all_force(&path)?;
+        } else {
+            clear_readonly(&path);
+            let _ = fs::remove_file(&path);
+        }
+    }
+
+    Ok(())
 }
 
 /// Recursively delete directory tree, explicitly clearing read-only flags on Windows with retry

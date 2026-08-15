@@ -1,10 +1,9 @@
 use colored::*;
 use std::fs;
 use std::path::Path;
-use std::process::Command;
 
 use crate::git::GitStatus;
-use crate::installer::remove_dir_all_force;
+use crate::installer::remove_tool_contents_except_readme;
 
 pub fn execute(tool_name: &str, force: bool, tools_dir: &Path) {
     let tool_path = tools_dir.join(tool_name);
@@ -64,34 +63,12 @@ pub fn execute(tool_name: &str, force: bool, tools_dir: &Path) {
 
     println!("Unfetching / purging {} repository files...", tool_name.cyan().bold());
 
-    // 1. Read and preserve README.md content before removing code
-    let readme_path = tool_path.join("README.md");
-    let readme_content = fs::read_to_string(&readme_path).ok();
-
-    // 2. Remove all files and directories in tool_path
-    if let Err(e) = remove_dir_all_force(&tool_path) {
-        eprintln!("{} Failed to remove directory {}: {}", "✗".red().bold(), tool_path.display(), e);
+    // Delete all repository files and folders WITHOUT touching README.md
+    if let Err(e) = remove_tool_contents_except_readme(&tool_path) {
+        eprintln!("{} Failed to remove files in {}: {}", "✗".red().bold(), tool_path.display(), e);
         return;
     }
 
-    // 3. Recreate directory with ONLY README.md preserved for parent index repository
-    let content_to_write = readme_content.or_else(|| {
-        let output = Command::new("git")
-            .args(["-C", tools_dir.to_str().unwrap_or("."), "show", &format!("HEAD:{}/README.md", tool_name)])
-            .output()
-            .ok()?;
-        if output.status.success() {
-            Some(String::from_utf8_lossy(&output.stdout).to_string())
-        } else {
-            None
-        }
-    });
-
-    if let Some(content) = content_to_write {
-        let _ = fs::create_dir_all(&tool_path);
-        let _ = fs::write(&readme_path, content);
-        println!("  {} Preserved {} for parent repository index.", "✓".green(), "README.md".bold());
-    }
-
+    println!("  {} Preserved {} untouched for parent repository index.", "✓".green(), "README.md".bold());
     println!("{} Successfully unfetched {}. Repository files removed.", "✓".green().bold(), tool_name.bold());
 }
