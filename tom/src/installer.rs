@@ -5,7 +5,6 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-use crate::git::GitStatus;
 
 /// Clone / populate repository into target directory reliably
 pub fn clone_repository(repo_url: &str, target_path: &Path) -> Result<(), String> {
@@ -173,64 +172,7 @@ pub fn run_install_pipeline(
     Ok(())
 }
 
-/// Safely uninstall tool, running sequential uninstall steps and preserving README.md
-pub fn uninstall_tool(
-    tool_path: &Path,
-    tool_name: &str,
-    force: bool,
-    steps: Option<&[String]>,
-) -> Result<(), String> {
-    if !tool_path.exists() {
-        return Err(format!("Tool '{}' does not exist at {}", tool_name, tool_path.display()));
-    }
-
-    let git_status = GitStatus::inspect(tool_path);
-    if !force && git_status.is_repo {
-        if !git_status.is_clean {
-            return Err(format!(
-                "'{}' has uncommitted or untracked changes.\nUninstall aborted to protect your work. Use --force to delete anyway.",
-                tool_name
-            ));
-        }
-        if git_status.ahead > 0 {
-            return Err(format!(
-                "'{}' has {} unpushed commit(s).\nUninstall aborted to prevent loss of commits. Use --force to delete anyway.",
-                tool_name, git_status.ahead
-            ));
-        }
-    }
-
-    // 1. Run sequential uninstall steps first
-    if let Some(step_list) = steps {
-        if !step_list.is_empty() {
-            println!("  {} Executing uninstallation steps:", "→".cyan());
-            for cmd_str in step_list {
-                println!("    • {}", cmd_str.dimmed());
-                let _ = execute_shell_command(tool_path, cmd_str);
-            }
-            sleep(Duration::from_millis(300));
-        }
-    }
-
-    // 2. Read and preserve README.md content before removing code
-    let readme_path = tool_path.join("README.md");
-    let readme_content = fs::read_to_string(&readme_path).ok();
-
-    // 3. Remove all files and directories in tool_path
-    remove_dir_all_force(tool_path)
-        .map_err(|e| format!("Failed to remove directory {}: {}", tool_path.display(), e))?;
-
-    // 4. Recreate directory with ONLY README.md preserved for parent index repository
-    if let Some(content) = readme_content {
-        let _ = fs::create_dir_all(tool_path);
-        let _ = fs::write(&readme_path, content);
-        println!("  {} Preserved {} for parent repository index", "✓".green(), "README.md".bold());
-    }
-
-    Ok(())
-}
-
-fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStatus, String> {
+pub fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStatus, String> {
     #[cfg(target_os = "windows")]
     let status = Command::new("cmd")
         .args(["/C", cmd])
@@ -249,7 +191,7 @@ fn execute_shell_command(cwd: &Path, cmd: &str) -> Result<std::process::ExitStat
 }
 
 /// Recursively delete directory tree, explicitly clearing read-only flags on Windows with retry
-fn remove_dir_all_force(path: &Path) -> std::io::Result<()> {
+pub fn remove_dir_all_force(path: &Path) -> std::io::Result<()> {
     let mut last_err = None;
     for i in 0..5 {
         if i > 0 {

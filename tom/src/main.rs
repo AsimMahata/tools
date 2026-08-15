@@ -16,7 +16,7 @@ use config::Config;
     name = "tom",
     version,
     about = "TOM — Personal Tool & Package Manager",
-    long_about = "TOM (Tool Manager) discovers, installs, inspects, and manages your ecosystem of independent tools and Git repositories."
+    long_about = "TOM (Tool Manager) discovers, fetches, installs, inspects, and manages your ecosystem of independent tools and Git repositories."
 )]
 struct Cli {
     /// Override the root tools directory
@@ -33,7 +33,7 @@ enum Commands {
     #[command(alias = "ls")]
     List,
 
-    /// Show detailed information and Git status for a specific tool
+    /// Show detailed information, steps, and Git status for a specific tool
     Info {
         /// Name of the tool to inspect
         tool: String,
@@ -46,10 +46,21 @@ enum Commands {
         tool: Option<String>,
     },
 
-    /// Install a tool from registry or URL into the tools directory
-    #[command(alias = "add")]
+    /// Fetch / clone a tool's Git repository without building it
+    #[command(alias = "get", alias = "clone")]
+    Fetch {
+        /// Name of the tool or Git URL to fetch
+        tool: Option<String>,
+
+        /// Fetch all tools defined in the registry
+        #[arg(short = 'a', long = "all")]
+        all: bool,
+    },
+
+    /// Run installation/build pipeline for a tool
+    #[command(alias = "build", alias = "add")]
     Install {
-        /// Name of the tool or Git URL to install
+        /// Name of the tool to install/build
         tool: Option<String>,
 
         /// Install all tools defined in the registry
@@ -57,10 +68,16 @@ enum Commands {
         all: bool,
     },
 
-    /// Uninstall / remove an installed tool
-    #[command(alias = "rm")]
+    /// Run uninstallation command for a tool (keeps repository files)
     Uninstall {
         /// Name of the tool to uninstall
+        tool: String,
+    },
+
+    /// Remove a tool's repository and code files (preserves README.md)
+    #[command(alias = "purge", alias = "remove", alias = "rm")]
+    Unfetch {
+        /// Name of the tool to unfetch / purge
         tool: String,
 
         /// Force removal even if there are uncommitted or unpushed changes
@@ -68,8 +85,8 @@ enum Commands {
         force: bool,
     },
 
-    /// Pull latest updates and rebuild a tool safely
-    #[command(alias = "up")]
+    /// Pull latest Git updates for tools
+    #[command(alias = "up", alias = "pull")]
     Update {
         /// Name of the tool to update (or use --all)
         tool: Option<String>,
@@ -105,11 +122,17 @@ fn main() {
         Some(Commands::Status { tool }) => {
             commands::status::execute(tool.as_deref(), &tools_dir);
         }
+        Some(Commands::Fetch { tool, all }) => {
+            commands::fetch::execute(tool.as_deref(), all, &tools_dir);
+        }
         Some(Commands::Install { tool, all }) => {
             commands::install::execute(tool.as_deref(), all, &tools_dir);
         }
-        Some(Commands::Uninstall { tool, force }) => {
-            commands::uninstall::execute(&tool, force, &tools_dir);
+        Some(Commands::Uninstall { tool }) => {
+            commands::uninstall::execute(&tool, &tools_dir);
+        }
+        Some(Commands::Unfetch { tool, force }) => {
+            commands::unfetch::execute(&tool, force, &tools_dir);
         }
         Some(Commands::Update { tool, all }) => {
             commands::update::execute(tool.as_deref(), all, &tools_dir);

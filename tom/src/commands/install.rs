@@ -2,21 +2,21 @@ use colored::*;
 use std::path::Path;
 
 use crate::installer::{clone_repository, run_install_pipeline};
-use crate::registry::{Registry, RegistryEntry};
+use crate::registry::Registry;
 use crate::tool::find_tool;
 
 pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
     let registry = Registry::load(tools_dir);
 
     if all {
-        println!("{}", "Installing all tools from registry...".bold().cyan());
-        println!("{}", "=====================================".dimmed());
+        println!("{}", "Installing all tools...".bold().cyan());
+        println!("{}", "=======================".dimmed());
 
-        for (name, entry) in &registry.tools {
+        for (name, _) in &registry.tools {
             if name.eq_ignore_ascii_case("tom") {
                 continue; // Skip self
             }
-            install_single(entry, tools_dir);
+            install_single(name, &registry, tools_dir);
             println!();
         }
         return;
@@ -31,81 +31,63 @@ pub fn execute(target_tool: Option<&str>, all: bool, tools_dir: &Path) {
         }
     };
 
-    if let Some(entry) = registry.get(tool_name) {
-        install_single(entry, tools_dir);
-    } else if tool_name.starts_with("http://")
-        || tool_name.starts_with("https://")
-        || tool_name.starts_with("git@")
-    {
-        // Direct git clone URL
-        let inferred_name = tool_name
-            .trim_end_matches(".git")
-            .split('/')
-            .last()
-            .unwrap_or("unnamed_tool")
-            .to_string();
-
-        let entry = RegistryEntry {
-            name: inferred_name,
-            description: None,
-            repository: tool_name.to_string(),
-            tags: None,
-            requirements: None,
-            install_steps: None,
-            uninstall_steps: None,
-            tips: None,
-        };
-        install_single(&entry, tools_dir);
-    } else {
-        eprintln!(
-            "{} Tool '{}' not found in registry.",
-            "Error:".red().bold(),
-            tool_name
-        );
-        println!("\nAvailable tools in registry:");
-        for (name, entry) in &registry.tools {
-            let desc = entry.description.as_deref().unwrap_or("");
-            println!("  - {:<12} {}", name.bold(), desc.dimmed());
-        }
-    }
+    install_single(tool_name, &registry, tools_dir);
 }
 
-fn install_single(entry: &RegistryEntry, tools_dir: &Path) {
-    println!("Installing {}...", entry.name.cyan().bold());
+fn install_single(tool_name: &str, registry: &Registry, tools_dir: &Path) {
+    println!("Installing {}...", tool_name.cyan().bold());
 
-    let target_path = tools_dir.join(&entry.name);
+    let target_path = tools_dir.join(tool_name);
+    let reg_entry = registry.get(tool_name);
 
-    if let Some(tool) = find_tool(tools_dir, &entry.name) {
-        if !tool.is_self {
-            println!("  {} {} is already installed at {}", "ℹ".cyan(), entry.name.bold(), target_path.display());
-            println!("  Run 'tom update {}' to pull updates or 'tom uninstall {}' to reinstall.", entry.name, entry.name);
+    // 1. Ensure repository is fetched
+    let tool_opt = find_tool(tools_dir, tool_name);
+    if tool_opt.is_none() {
+        if let Some(entry) = reg_entry {
+            print!("  Tool code not found. Fetching repository... ");
+            match clone_repository(&entry.repository, &target_path) {
+                Ok(_) => {
+                    println!("{}", "✓".green().bold());
+                }
+                Err(err) => {
+                    println!("{}", "✗".red().bold());
+                    eprintln!("  {} {}", "✗".red(), err);
+                    return;
+                }
+            }
+        } else {
+            eprintln!(
+                "  {} Tool '{}' is not present in workspace or registry.\n  Run 'tom fetch <repo-url>' first.",
+                "Error:".red().bold(),
+                tool_name
+            );
             return;
         }
     }
 
-    // 1. Clone/populate full repository
-    print!("  Cloning repository... ");
-    match clone_repository(&entry.repository, &target_path) {
-        Ok(_) => {
-            println!("{}", "✓".green().bold());
-            println!("  {} Repository cloned from {}", "✓".green(), entry.repository.dimmed());
-        }
-        Err(err) => {
-            println!("{}", "✗".red().bold());
-            eprintln!("  {} {}", "✗".red(), err);
-            return;
-        }
-    }
+    let tool = find_tool(tools_dir, tool_name);
+    let steps = tool
+        .as_ref()
+        .and_then(|t| t.metadata.as_ref())
+        .and_then(|m| m.install_steps.as_deref())
+        .or_else(|| reg_entry.and_then(|r| r.install_steps.as_deref()));
+
+    let reqs = tool
+        .as_ref()
+        .and_then(|t| t.metadata.as_ref())
+        .and_then(|m| m.requirements.as_deref())
+        .or_else(|| reg_entry.and_then(|r| r.requirements.as_deref()));
+
+    let tips = tool
+        .as_ref()
+        .and_then(|t| t.metadata.as_ref())
+        .and_then(|m| m.tips.as_deref())
+        .or_else(|| reg_entry.and_then(|r| r.tips.as_deref()));
 
     // 2. Run step-by-step install pipeline
-    match run_install_pipeline(
-        &target_path,
-        entry.install_steps.as_deref(),
-        entry.requirements.as_deref(),
-        entry.tips.as_deref(),
-    ) {
+    match run_install_pipeline(&target_path, steps, reqs, tips) {
         Ok(_) => {
-            println!("\n{} {} is installed and ready to use.", "✓".green().bold(), entry.name.bold());
+            println!("\n{} {} is built and ready to use.", "✓".green().bold(), tool_name.bold());
         }
         Err(err) => {
             eprintln!("\n{} Installation notice: {}", "⚠".yellow().bold(), err);
