@@ -43,6 +43,8 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
 
     println!("Uninstalling {}...", tool.name.cyan().bold());
 
+    let mut ran_script = false;
+
     // 1. Prioritize local uninstall.bat or uninstall.sh if present
     #[cfg(target_os = "windows")]
     if tool.path.join("uninstall.bat").is_file() {
@@ -52,6 +54,7 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             .current_dir(&tool.path)
             .status();
         println!("  {} uninstall.bat completed.", "✓".green());
+        ran_script = true;
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -62,40 +65,43 @@ pub fn execute(tool_name: &str, tools_dir: &Path) {
             .current_dir(&tool.path)
             .status();
         println!("  {} uninstall.sh completed.", "✓".green());
+        ran_script = true;
     }
 
-    // 2. Run defined uninstallation steps
-    if let Some(step_list) = uninstall_steps {
-        if !step_list.is_empty() {
-            println!("  {} Executing uninstallation steps:", "⚙".bold());
-            for (idx, cmd_str) in step_list.iter().enumerate() {
-                println!(
-                    "    [{}/{}] Running: {}",
-                    idx + 1,
-                    step_list.len(),
-                    cmd_str.dimmed()
-                );
-                #[cfg(target_os = "windows")]
-                let status = Command::new("powershell")
-                    .args(["-NoProfile", "-Command", cmd_str])
-                    .current_dir(&tool.path)
-                    .status();
+    // 2. Run defined uninstallation steps only if no custom script was executed
+    if !ran_script {
+        if let Some(step_list) = uninstall_steps {
+            if !step_list.is_empty() {
+                println!("  {} Executing uninstallation steps:", "⚙".bold());
+                for (idx, cmd_str) in step_list.iter().enumerate() {
+                    println!(
+                        "    [{}/{}] Running: {}",
+                        idx + 1,
+                        step_list.len(),
+                        cmd_str.dimmed()
+                    );
+                    #[cfg(target_os = "windows")]
+                    let status = Command::new("powershell")
+                        .args(["-NoProfile", "-Command", cmd_str])
+                        .current_dir(&tool.path)
+                        .status();
 
-                #[cfg(not(target_os = "windows"))]
-                let status = Command::new("sh")
-                    .args(["-c", cmd_str])
-                    .current_dir(&tool.path)
-                    .status();
+                    #[cfg(not(target_os = "windows"))]
+                    let status = Command::new("sh")
+                        .args(["-c", cmd_str])
+                        .current_dir(&tool.path)
+                        .status();
 
-                match status {
-                    Ok(s) if s.success() => {
-                        println!("    {} Step {} completed.", "✓".green(), idx + 1);
-                    }
-                    Ok(_) => {
-                        eprintln!("    {} Notice: Step completed.", "ℹ".dimmed());
-                    }
-                    Err(e) => {
-                        eprintln!("    {} Failed to run step: {}", "✗".red(), e);
+                    match status {
+                        Ok(s) if s.success() => {
+                            println!("    {} Step {} completed.", "✓".green(), idx + 1);
+                        }
+                        Ok(_) => {
+                            eprintln!("    {} Notice: Step completed.", "ℹ".dimmed());
+                        }
+                        Err(e) => {
+                            eprintln!("    {} Failed to run step: {}", "✗".red(), e);
+                        }
                     }
                 }
             }
