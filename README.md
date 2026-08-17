@@ -33,7 +33,7 @@ The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE
 | **[`tom`](./tom/)** | Tool Manager & CLI orchestrator to discover, fetch, install, update, and inspect personal tools | [AsimMahata/tom](https://github.com/AsimMahata/tom) | Core Manager | Rust (Cargo 1.75+) |
 | **[`netman`](./netman/)** | Windows network management & diagnostic CLI (Wi-Fi, Mobile Hotspot, LAN, IP, speed & connectivity tests) | [AsimMahata/netman](https://github.com/AsimMahata/netman) | Active Tool | Python 3.8+ |
 | **[`progit`](./progit/)** | Personal progress & activity tracker CLI (Codeforces, LeetCode, tasks, daily notes, stats & backups) | [AsimMahata/progit](https://github.com/AsimMahata/progit) | Active Tool | Rust (Cargo) |
-| **[`logit`](./logit/)** | Job application & resume tracker CLI (applications, interviews, OAs, email & resume versions) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
+| **[`logit`](./logit/)** | Personal log maker, job application & resume tracker CLI (applications, interviews, OAs, email & resume versions) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
 | **[`sodo`](./sodo/)** | YouTube → MP3 downloader CLI powered by `yt-dlp` (batch queues, history, format selection) | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool | Python 3.10+, `ffmpeg` |
 | **[`sudow`](./sudow/)** | Windows Sudo-style command wrapper for seamless Administrator elevation without extra windows | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool | Rust (Cargo) |
 

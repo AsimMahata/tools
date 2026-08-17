@@ -58,9 +58,9 @@ tips = [
 
 [tools.logit]
 name = "logit"
-description = "Job application and resume tracker CLI"
+description = "Personal log maker, job application and resume tracker CLI"
 repository = "https://github.com/AsimMahata/logit.git"
-tags = ["jobs", "applications", "resume", "tracker", "cli"]
+tags = ["jobs", "applications", "resume", "tracker", "cli", "logs", "markdown"]
 requirements = [
     "Rust toolchain (cargo in PATH)"
 ]
