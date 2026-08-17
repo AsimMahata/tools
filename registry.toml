@@ -39,9 +39,9 @@ tips = [
 
 [tools.progit]
 name = "progit"
-description = "Git productivity enhancements and workflow helper"
+description = "Personal progress and activity tracker CLI"
 repository = "https://github.com/AsimMahata/progit.git"
-tags = ["git", "workflow", "productivity"]
+tags = ["progress", "tracker", "leetcode", "codeforces", "tasks"]
 requirements = [
     "Rust toolchain (cargo in PATH)"
 ]
@@ -53,14 +53,14 @@ uninstall_steps = [
 ]
 tips = [
     "The compiled binary is placed in target/release/progit.exe",
-    "Run 'progit --help' to view workflow commands"
+    "Run 'progit --help' to view progress tracking commands"
 ]
 
 [tools.logit]
 name = "logit"
-description = "Log inspection and management utility"
+description = "Job application and resume tracker CLI"
 repository = "https://github.com/AsimMahata/logit.git"
-tags = ["logging", "cli", "tools"]
+tags = ["jobs", "applications", "resume", "tracker", "cli"]
 requirements = [
     "Rust toolchain (cargo in PATH)"
 ]
@@ -72,8 +72,9 @@ uninstall_steps = [
 ]
 tips = [
     "The compiled binary is placed in target/release/logit.exe",
-    "Run 'logit --help' to see log filtering and formatting options"
+    "Run 'logit --help' to see application and resume tracking options"
 ]
+
 
 [tools.sodo]
 name = "sodo"

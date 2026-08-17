@@ -1,12 +1,12 @@
 # Personal Tools Ecosystem
 
-A curated collection of modular, independent command-line utilities and personal tools managed by **TOM** (Tool Manager).
+A curated collection of modular, independent personal CLI tools managed and orchestrated through **TOM** (Tool Manager).
 
-Each tool in this workspace is an independent Git repository. This parent repository tracks the ecosystem index, tool documentation stubs, and the TOM orchestrator.
+The parent `tools` repository tracks the ecosystem index ([`registry.toml`](./registry.toml)), workspace configuration, 1-click installer, and the core **TOM** orchestrator source code. Individual tools exist as independent repositories hosted under the ecosystem directory.
 
 ---
 
-## ⚡ Quick Start: 1-Click Windows Installation
+## ⚡ Quick Start: Windows Installation
 
 To install **TOM** and add it to your system PATH, run the included batch installer:
 
@@ -14,91 +14,123 @@ To install **TOM** and add it to your system PATH, run the included batch instal
 install.bat
 ```
 
-Or double-click `install.bat` in File Explorer.
+Or double-click `install.bat` in File Explorer. You can also pass `-y` to skip the confirmation prompt:
 
-> **Prerequisites**: [Rust & Cargo](https://rustup.rs/) installed on your machine.
+```cmd
+install.bat -y
+```
+
+> **Prerequisites**: [Rust & Cargo](https://rustup.rs/) installed on your machine (`cargo` in PATH).
+
+The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE%\.cargo\bin\`, making `tom` available globally in your terminal.
 
 ---
 
 ## 🛠️ Tool Index
 
-| Tool | Description | Repository | Role |
-| :--- | :--- | :--- | :--- |
-| **[`tom`](./tom/)** | Tool Manager & CLI orchestrator for personal tool collections | [AsimMahata/tom](https://github.com/AsimMahata/tom) | Core Manager |
-| **[`netman`](./netman/)** | Windows network management and diagnostic CLI | [AsimMahata/netman](https://github.com/AsimMahata/netman) | Active Tool |
-| **[`progit`](./progit/)** | Git productivity enhancements and workflow helper | [AsimMahata/progit](https://github.com/AsimMahata/progit) | Active Tool |
-| **[`logit`](./logit/)** | Log inspection and management utility | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool |
-| **[`sodo`](./sodo/)** | Fast task management and todo tracker CLI | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool |
-| **[`sudow`](./sudow/)** | Windows sudo-style command wrapper for seamless elevation | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool |
+| Tool | Description | Repository | Role | Requirements |
+| :--- | :--- | :--- | :--- | :--- |
+| **[`tom`](./tom/)** | Tool Manager & CLI orchestrator to discover, fetch, install, update, and inspect personal tools | [AsimMahata/tom](https://github.com/AsimMahata/tom) | Core Manager | Rust (Cargo 1.75+) |
+| **[`netman`](./netman/)** | Windows network management & diagnostic CLI (Wi-Fi, Mobile Hotspot, LAN, IP, speed & connectivity tests) | [AsimMahata/netman](https://github.com/AsimMahata/netman) | Active Tool | Python 3.8+ |
+| **[`progit`](./progit/)** | Personal progress & activity tracker CLI (Codeforces, LeetCode, tasks, daily notes, stats & backups) | [AsimMahata/progit](https://github.com/AsimMahata/progit) | Active Tool | Rust (Cargo) |
+| **[`logit`](./logit/)** | Job application & resume tracker CLI (applications, interviews, OAs, email & resume versions) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
+| **[`sodo`](./sodo/)** | YouTube → MP3 downloader CLI powered by `yt-dlp` (batch queues, history, format selection) | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool | Python 3.10+, `ffmpeg` |
+| **[`sudow`](./sudow/)** | Windows Sudo-style command wrapper for seamless Administrator elevation without extra windows | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool | Rust (Cargo) |
 
 ---
 
 ## 📂 Architecture & Directory Model
 
 ```text
-tools/                     ← Dedicated parent tools repository
-├── README.md              ← Ecosystem landing page
-├── install.bat            ← 1-click Windows installer
-├── registry.toml          ← Tool metadata, build pipelines & tips
-├── tom/                   ← TOM tool manager (full source tracked)
-├── netman/                ← Sibling tool (independent Git repo / README stub)
-├── progit/                ← Sibling tool (independent Git repo / README stub)
-├── logit/                 ← Sibling tool (independent Git repo / README stub)
-├── sodo/                  ← Sibling tool (independent Git repo / README stub)
-└── sudow/                 ← Sibling tool (independent Git repo / README stub)
+                 Personal Tools Ecosystem
+                            │
+                            ▼
+                           TOM
+                    (Ecosystem Manager)
+                            │
+       ┌───────────┬────────┴──────────┬───────────┬───────────┐
+       ▼           ▼                   ▼           ▼           ▼
+    netman      progit               logit       sodo        sudow
+  (Network)  (Progress)            (Job Apps)  (Media/MP3)  (Elevation)
 ```
+
+### Directory Structure
+
+```text
+tools/
+├── README.md              ← Ecosystem landing page
+├── install.bat            ← 1-click Windows installer for TOM
+├── registry.toml          ← Master tool metadata & build pipelines
+├── config.toml            ← Global configuration (tools path & editor settings)
+├── tom/                   ← TOM orchestrator (Rust crate, source tracked in parent repo)
+├── netman/                ← Windows network management CLI (Python, independent Git repo)
+├── progit/                ← Progress & activity tracker CLI (Rust, independent Git repo)
+├── logit/                 ← Job application & resume tracker CLI (Rust, independent Git repo)
+├── sodo/                  ← YouTube → MP3 downloader CLI (Python, independent Git repo)
+└── sudow/                 ← Windows sudo elevation wrapper (Rust, independent Git repo)
+```
+
+* **TOM Manager**: Source code is located in [`tom/`](./tom/) and tracked directly within the parent workspace.
+* **Managed Tools**: Sibling tools (`netman`, `progit`, `logit`, `sodo`, `sudow`) are independent Git repositories managed via TOM.
 
 ---
 
-## 🚀 Core Lifecycle Commands
+## 🚀 TOM Lifecycle Commands
 
-TOM provides a decoupled 4-command lifecycle for managing your tools:
+TOM provides lifecycle commands for managing your tools ecosystem:
 
 ### 1. Discovery & Status
 ```bash
-# Formatted table of all tools with Git & Installation state
+# List all discovered tools in the ecosystem directory
 tom list
 
-# Detailed Git sync + installation status across all tools
-tom status
+# Show detailed Git sync state & installation status across all tools (or specific tool)
+tom status [tool]
 
-# Detailed metadata, requirements, and commit history for a tool
+# View detailed tool metadata, build steps, tips, and git info
 tom info <tool>
 ```
 
 ### 2. Fetching & Updating (Source Code)
 ```bash
-# Fetch a tool's source code from GitHub into its directory
+# Clone/fetch a tool's repository (or a direct Git URL)
 tom fetch <tool>
 
 # Fetch all tools defined in the registry
 tom fetch all
 
-# Pull latest Git commits in-place and rebuild if updated
+# Pull latest Git commits in-place for a tool (or all tools)
 tom update <tool>
 tom update all
 ```
 
 ### 3. Building & Installing (Binaries)
 ```bash
-# Display requirements & tips, then compile and install
+# Compile and install a specific tool
 tom install <tool>
 
-# Install all tools in the registry
-tom install all
+# Build and install all tools defined in the registry (-y skips prompts)
+tom install all -y
 ```
 
-### 4. Uninstallation & Unfetching
+### 4. Uninstallation & Cleanup
 ```bash
-# Run uninstall scripts/cleanup while keeping the local repository
+# Run tool-specific uninstallation script/clean step (keeps Git repo)
 tom uninstall <tool>
 
-# Purge source code and .git while preserving README.md for the parent repository
+# Purge tool source files & repository (preserves stub README.md)
 tom unfetch <tool>
 ```
 
 ### 5. Navigation
 ```bash
-# Open tool directory in VS Code or default file manager
+# Open tool directory in VS Code or custom editor (--editor / -e flag)
 tom open <tool>
 ```
+
+---
+
+## ⚙️ Configuration & Registry
+
+* **[`registry.toml`](./registry.toml)**: Defines tool repositories, tags, system requirements, build/install commands, and tips.
+* **`config.toml`**: Stores global configuration such as the default `tools_directory` path and preferred text editor.
