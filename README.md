@@ -33,9 +33,18 @@ The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE
 | **[`tom`](./tom/)** | Tool Manager & CLI orchestrator to discover, fetch, install, update, and inspect personal tools | [AsimMahata/tom](https://github.com/AsimMahata/tom) | Core Manager | Rust (Cargo 1.75+) |
 | **[`netman`](./netman/)** | Windows network management & diagnostic CLI (Wi-Fi, Mobile Hotspot, LAN, IP, speed & connectivity tests) | [AsimMahata/netman](https://github.com/AsimMahata/netman) | Active Tool | Python 3.8+ |
 | **[`progit`](./progit/)** | Personal progress & activity tracker CLI (Codeforces, LeetCode, tasks, daily notes, stats & backups) | [AsimMahata/progit](https://github.com/AsimMahata/progit) | Active Tool | Rust (Cargo) |
-| **[`logit`](./logit/)** | Personal log maker, job application & resume tracker CLI (applications, interviews, OAs, email & resume versions) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
+| **[`logit`](./logit/)** | Personal log maker & diary CLI (activities, daily logs, job applications & resume tracking) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
 | **[`sodo`](./sodo/)** | YouTube → MP3 downloader CLI powered by `yt-dlp` (batch queues, history, format selection) | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool | Python 3.10+, `ffmpeg` |
 | **[`sudow`](./sudow/)** | Windows Sudo-style command wrapper for seamless Administrator elevation without extra windows | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool | Rust (Cargo) |
+
+### 💡 Naming & Origins
+
+* **`tom`**: **TO**ol **M**anager — Ecosystem orchestrator managing all tools.
+* **`logit`**: **Log It** — "Log" as in diary/logbook. Record what you are doing (daily logs, activities, job applications, resume versions used).
+* **`progit`**: **Progress It** — Track progress and milestones (coding platforms, tasks, daily notes). Built after `logit` and adopted the `-it` suffix.
+* **`sodo`**: **SO**ng **DO**wnloader — YouTube → MP3 downloader CLI.
+* **`netman`**: **NET**work **MAN**ager — Windows network diagnostic & management CLI.
+* **`sudow`**: **SUDO W**indows — Sudo-style elevation wrapper for Windows terminal.
 
 ---
 
@@ -51,7 +60,7 @@ The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE
        ┌───────────┬────────┴──────────┬───────────┬───────────┐
        ▼           ▼                   ▼           ▼           ▼
     netman      progit               logit       sodo        sudow
-  (Network)  (Progress)            (Job Apps)  (Media/MP3)  (Elevation)
+   (Network)   (Progress)          (Personal)   (Media)    (Elevation)
 ```
 
 ### Directory Structure
@@ -65,7 +74,7 @@ tools/
 ├── tom/                   ← TOM orchestrator (Rust crate, source tracked in parent repo)
 ├── netman/                ← Windows network management CLI (Python, independent Git repo)
 ├── progit/                ← Progress & activity tracker CLI (Rust, independent Git repo)
-├── logit/                 ← Job application & resume tracker CLI (Rust, independent Git repo)
+├── logit/                 ← Personal log & diary tracker CLI (Rust, independent Git repo)
 ├── sodo/                  ← YouTube → MP3 downloader CLI (Python, independent Git repo)
 └── sudow/                 ← Windows sudo elevation wrapper (Rust, independent Git repo)
 ```
