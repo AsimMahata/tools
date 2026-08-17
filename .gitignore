@@ -19,6 +19,10 @@
 !/sudow/README.md
 !/sudow/readme.md
 
+/frog/*
+!/frog/README.md
+!/frog/readme.md
+
 # Ignore build artifacts
 target/
 tom/target/

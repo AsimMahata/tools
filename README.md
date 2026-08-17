@@ -36,6 +36,7 @@ The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE
 | **[`logit`](./logit/)** | Personal log maker & diary CLI (activities, daily logs, job applications & resume tracking) | [AsimMahata/logit](https://github.com/AsimMahata/logit) | Active Tool | Rust (Cargo) |
 | **[`sodo`](./sodo/)** | YouTube → MP3 downloader CLI powered by `yt-dlp` (batch queues, history, format selection) | [AsimMahata/sodo](https://github.com/AsimMahata/sodo) | Active Tool | Python 3.10+, `ffmpeg` |
 | **[`sudow`](./sudow/)** | Windows Sudo-style command wrapper for seamless Administrator elevation without extra windows | [AsimMahata/sudow](https://github.com/AsimMahata/sudow) | Active Tool | Rust (Cargo) |
+| **[`frog`](./frog/)** | Safe file organization CLI for Windows with strict path rules, hidden-file refusal, and double password barriers | [AsimMahata/frog](https://github.com/AsimMahata/frog) | Active Tool | Rust (Cargo) |
 
 ### 💡 Naming & Origins
 
@@ -45,22 +46,23 @@ The installer compiles TOM in release mode and copies `tom.exe` to `%USERPROFILE
 * **`sodo`**: **SO**ng **DO**wnloader — YouTube → MP3 downloader CLI.
 * **`netman`**: **NET**work **MAN**ager — Windows network diagnostic & management CLI.
 * **`sudow`**: **SUDO W**indows — Sudo-style elevation wrapper for Windows terminal.
+* **`frog`**: **F**ile **ORG**anizer — Originally **FORG** (**F**ile **Or**ganizer), rearranged via anagram to **FROG** for a better tool name.
 
 ---
 
 ## 📂 Architecture & Directory Model
 
 ```text
-                 Personal Tools Ecosystem
-                            │
-                            ▼
-                           TOM
-                    (Ecosystem Manager)
-                            │
-       ┌───────────┬────────┴──────────┬───────────┬───────────┐
-       ▼           ▼                   ▼           ▼           ▼
-    netman      progit               logit       sodo        sudow
-   (Network)   (Progress)          (Personal)   (Media)    (Elevation)
+                                Personal Tools Ecosystem
+                                           │
+                                           ▼
+                                          TOM
+                                   (Ecosystem Manager)
+                                           │
+       ┌───────────┬───────────┬───────────┴───────────┬───────────┬───────────┐
+       ▼           ▼           ▼                       ▼           ▼           ▼
+    netman      progit       logit                   sodo        sudow       frog
+   (Network)   (Progress)  (Personal)               (Media)   (Elevation) (Organizer)
 ```
 
 ### Directory Structure
@@ -76,11 +78,13 @@ tools/
 ├── progit/                ← Progress & activity tracker CLI (Rust, independent Git repo)
 ├── logit/                 ← Personal log & diary tracker CLI (Rust, independent Git repo)
 ├── sodo/                  ← YouTube → MP3 downloader CLI (Python, independent Git repo)
-└── sudow/                 ← Windows sudo elevation wrapper (Rust, independent Git repo)
+├── sudow/                 ← Windows sudo elevation wrapper (Rust, independent Git repo)
+└── frog/                  ← Safe file organization CLI (Rust, independent Git repo)
 ```
 
 * **TOM Manager**: Source code is located in [`tom/`](./tom/) and tracked directly within the parent workspace.
-* **Managed Tools**: Sibling tools (`netman`, `progit`, `logit`, `sodo`, `sudow`) are independent Git repositories managed via TOM.
+* **Managed Tools**: Sibling tools (`netman`, `progit`, `logit`, `sodo`, `sudow`, `frog`) are independent Git repositories managed via TOM.
+
 
 ---
 

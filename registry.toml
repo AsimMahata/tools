@@ -115,3 +115,24 @@ tips = [
     "Run 'sudow doctor' to verify system elevation and environment health",
     "Run 'sudow --help' to view command options and usage examples"
 ]
+
+[tools.frog]
+name = "frog"
+description = "Safe File Organization CLI for Windows with multi-barrier safeguards"
+repository = "https://github.com/AsimMahata/frog.git"
+tags = ["file-organizer", "safety", "cli", "windows", "tools"]
+requirements = [
+    "Rust toolchain (cargo in PATH)"
+]
+install_steps = [
+    "cargo build --release"
+]
+uninstall_steps = [
+    "cargo clean"
+]
+tips = [
+    "The compiled binary is placed in target/release/frog.exe",
+    "Run 'frog passwd' after installation to configure your security password",
+    "Run 'frog --help' to view options and safety rules"
+]
+
